@@ -1,11 +1,12 @@
 import { Component, lazy, Suspense } from "react";
 import Field from "../components/Field.jsx";
+import Button from "../components/Button.jsx";
 
 const PdfPreview = lazy(() => import("../../pdf/PdfPreview.jsx"));
 function SummaryGroup({ title, rows, onEdit }) {
   const populated = rows.filter(([, value]) => String(value ?? "").trim());
   if (!populated.length) return null;
-  return <section className="summary-group"><div className="summary-heading"><h3>{title}</h3><button type="button" className="text-button" onClick={onEdit}>Edit</button></div><dl>{populated.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl></section>;
+  return <section className="summary-group"><div className="summary-heading"><h3>{title}</h3><Button variant="compact" onClick={onEdit}>Edit</Button></div><dl>{populated.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl></section>;
 }
 function ReviewSummary({ documentData, onEdit }) {
   const { pages, provenance } = documentData;
@@ -29,7 +30,7 @@ class PdfPreviewErrorBoundary extends Component {
 export default function ReviewStep({ workflow }) {
   const { quotation, update, resolved, exportReady, readinessGroups, jumpToIssue, showReviewErrors, setShowReviewErrors, previewRequested, setPreviewRequested, visitStep, pdfFileName } = workflow;
   return <>
-    <div className="review-actions"><button className="button button-quiet" type="button" onClick={() => setShowReviewErrors(true)}>Review missing details</button><button className="button" type="button" onClick={() => setPreviewRequested(true)}>Preview quotation</button><span>{!exportReady ? `${resolved.missing.length} item(s) need attention before download.` : "Ready to preview and download."}</span></div>
+    <div className="review-actions"><div><p className="review-actions-kicker">Document readiness</p><span>{!exportReady ? `${resolved.missing.length} item(s) need attention before download.` : "Ready to preview and download."}</span></div><div className="review-action-buttons"><Button variant="secondary" onClick={() => setShowReviewErrors(true)}>Review missing details</Button><Button onClick={() => setPreviewRequested(true)}>Preview quotation</Button></div></div>
     {!exportReady && <p className="draft-indicator"><strong>Draft preview available.</strong><span>Preview shows only entered or selected values; incomplete fields stay blank. Download remains locked until required entries are complete.</span></p>}
     {showReviewErrors && readinessGroups.length > 0 && <div className="validation-summary"><strong>Complete these items before downloading the quotation:</strong>{readinessGroups.map(([title, entries]) => <section key={title}><h3>{title}</h3><ul>{entries.map((entry) => <li key={`${entry.path}-${entry.label}`}><button type="button" onClick={() => jumpToIssue(entry)}>{entry.label}</button><span>Required entry</span></li>)}</ul></section>)}</div>}
     {resolved.warnings.length > 0 && <div className="review-warning"><strong>Selected lift needs review</strong>{resolved.warnings.map((warning) => <p key={warning}>{warning.replace("Selected lift source note: ", "")}</p>)}</div>}
