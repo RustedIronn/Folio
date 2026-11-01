@@ -5,8 +5,9 @@ import { ALTIS_QUOTATION_TEMPLATE as template } from "../src/templates/altisQuot
 import { getWorkflowProgress, overallCompletion, workflowSectionForPath } from "../src/models/quotation/workflow.js";
 import {
   amountInWords, applyConfiguration, composeAttention, composeCapacity, composeQuantityAndType, composeReference, composeSubject, createQuotation,
-  formatDimensions, formatInr, getConfigurationSwitchImpact, isQuotationExportReady, migrateDraft, resolveQuotationDocument, restoreMaterial, restoreTechnical,
-  setDimensionValue, setMaterialOverride, setTechnicalOverride, setUpperFloors, suggestFinancialYear,
+  DRAFT_STORAGE_KEY, formatDimensions, formatInr, getConfigurationSwitchImpact, isQuotationExportReady, loadDraft, migrateDraft, resolveQuotationDocument,
+  restoreMaterial, restoreTechnical, saveDraft, setCustomFloorValue, setDimensionMode, setDimensionValue, setFloorMode, setMaterialOverride,
+  setTechnicalOverride, setUpperFloors, suggestFinancialYear,
 } from "../src/models/quotation/quotation.js";
 
 const record = catalogue.records[0];
@@ -54,11 +55,16 @@ test("materials share technical values and template materials remain editable", 
 test("configuration switching requires an explicit choice when customizations exist", () => {
   let quote = completeQuote();
   quote = setTechnicalOverride(quote, "speed", "0.75 mtr/sec", catalogue, template);
+  quote = setMaterialOverride(quote, "flooring", "Synthetic flooring", template);
   const impact = getConfigurationSwitchImpact(quote, alternative);
   assert.equal(impact.requiresConfirmation, true);
-  assert.equal(impact.overrideCount, 1);
+  assert.equal(impact.overrideCount, 2);
+  const preserved = applyConfiguration(quote, alternative);
+  assert.equal(preserved.lift.technicalOverrides.speed, "0.75 mtr/sec");
+  assert.equal(preserved.materials.overrides.flooring, "Synthetic flooring");
   quote = applyConfiguration(quote, alternative, { preserveOverrides: false });
   assert.equal(Object.keys(quote.lift.technicalOverrides).length, 0);
+  assert.equal(Object.keys(quote.materials.overrides).length, 0);
 });
 test("INR formatting and amount words follow Indian grouping", () => {
   assert.equal(formatInr("900000"), "₹9,00,000");
@@ -79,6 +85,18 @@ test("version one drafts migrate to structured reference and overrides", () => {
   const migrated = migrateDraft(old, template);
   assert.deepEqual(migrated.reference, { quotationNumber: "0691", officeCode: "VJA", financialYear: "2023-24" });
   assert.equal(migrated.lift.technicalOverrides.speed, "0.7");
+});
+test("draft storage round-trips v4 quotations and restores a legacy draft key", () => {
+  const values = new Map();
+  const storage = { getItem: (key) => values.get(key) ?? null, setItem: (key, value) => values.set(key, value) };
+  const quote = completeQuote();
+  saveDraft(storage, quote);
+  const restored = loadDraft(storage, template);
+  assert.equal(restored.reference.quotationNumber, quote.reference.quotationNumber);
+  assert.equal(restored.lift.catalogueId, quote.lift.catalogueId);
+  values.delete(DRAFT_STORAGE_KEY);
+  values.set("quoteflow:draft:v3", JSON.stringify({ schemaVersion: 3, quotation: quote }));
+  assert.equal(loadDraft(storage, template).commercial.priceAmount, quote.commercial.priceAmount);
 });
 test("review and resolver use the same effective data", () => {
   const quote = completeQuote();
@@ -116,6 +134,18 @@ test("structured floors and dimensions populate the existing PDF project fields"
   assert.equal(quote.lift.project.shaftMeasurement, "1600 × 1500 mm");
   assert.equal(quote.lift.project.carSize, "1100 × 1400 × 2200 mm");
   assert.equal(formatDimensions(["800", "2100"]), "800 × 2100 mm");
+  assert.equal(formatDimensions(["800", ""]), "");
+});
+test("custom installation wording remains intact for unusual project layouts", () => {
+  let quote = createQuotation(template);
+  quote = setFloorMode(quote, "custom");
+  quote = setCustomFloorValue(quote, "customFloors", "Existing building levels as marked");
+  quote = setCustomFloorValue(quote, "customLandings", "Three served landings");
+  quote = setDimensionMode(quote, "shaft", "custom");
+  quote = setDimensionValue(quote, "shaft", "custom", "Measured on site before order");
+  assert.equal(quote.lift.project.floors, "Existing building levels as marked");
+  assert.equal(quote.lift.project.landings, "Three served landings");
+  assert.equal(quote.lift.project.shaftMeasurement, "Measured on site before order");
 });
 test("material restoration returns the approved standard value", () => {
   let quote = setMaterialOverride(createQuotation(template), "flooring", "Granite", template);
