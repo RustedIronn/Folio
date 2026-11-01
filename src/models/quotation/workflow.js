@@ -21,7 +21,8 @@ export function getWorkflowProgress(documentData, visited = new Set(), attempted
     const completed = Math.max(0, required - missing.length);
     let state = "not-started";
     if (step.id === currentStep) state = "current";
-    else if (required === 0 || missing.length === 0) state = "complete";
+    else if (step.id === "review") state = documentData.missing.length === 0 ? "ready" : "available";
+    else if (missing.length === 0) state = "complete";
     else if (attempted.has(step.id)) state = "incomplete";
     else if (visited.has(step.id)) state = "in-progress";
     return { ...step, required, completed, missing, state };

@@ -210,10 +210,12 @@ test("workflow progress distinguishes untouched, attempted, current, and complet
   const initial = getWorkflowProgress(incomplete, new Set(["customer"]), new Set(), "customer");
   assert.equal(initial.find((step) => step.id === "customer").state, "current");
   assert.equal(initial.find((step) => step.id === "installation").state, "not-started");
+  assert.equal(initial.find((step) => step.id === "review").state, "available");
   const attempted = getWorkflowProgress(incomplete, new Set(["customer", "installation"]), new Set(["installation"]), "customer");
   assert.equal(attempted.find((step) => step.id === "installation").state, "incomplete");
   const complete = getWorkflowProgress(resolveQuotationDocument(completeQuote(), catalogue, template), new Set(), new Set(), "customer");
   assert.equal(complete.find((step) => step.id === "materials").state, "complete");
+  assert.equal(complete.find((step) => step.id === "review").state, "ready");
 });
 test("workflow completion counts required fields and maps issues to editable sections", () => {
   const progress = getWorkflowProgress(resolveQuotationDocument(completeQuote(), catalogue, template));
