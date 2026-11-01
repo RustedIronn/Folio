@@ -98,10 +98,13 @@ function createCatalogue() {
 }
 
 function serialize(value) { return `${JSON.stringify(value, null, 2)}\n`; }
+function matchesSerializedFile(filePath, contents) {
+  return fs.readFileSync(filePath, "utf8").replace(/\r\n/g, "\n") === contents;
+}
 const { catalogue, validationReport } = createCatalogue();
 if (checkOnly) {
   for (const [filePath, contents] of [[cataloguePath, serialize(catalogue)], [reportPath, serialize(validationReport)]]) {
-    if (!fs.existsSync(filePath) || fs.readFileSync(filePath, "utf8") !== contents) throw new Error(`${path.relative(projectRoot, filePath)} is stale. Run npm run catalogue:build.`);
+    if (!fs.existsSync(filePath) || !matchesSerializedFile(filePath, contents)) throw new Error(`${path.relative(projectRoot, filePath)} is stale. Run npm run catalogue:build.`);
   }
   if (validationReport.invalidRows.length || validationReport.duplicateSourceIds.length) throw new Error("Catalogue validation found invalid rows or duplicate source record IDs.");
   console.log(`Validated ${catalogue.records.length} catalogue records.`);
