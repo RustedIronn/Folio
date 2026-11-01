@@ -25,3 +25,8 @@ dist-ssr
 
 # Customer quotation references are retained for internal audit only.
 /docs/references/*.pdf
+
+# Historical customer/commercial workbooks are analysis inputs only. Keep the
+# approved, non-customer lift-model source traceable in Git.
+/data/source/*.xlsx
+!/data/source/lift-models.xlsx
