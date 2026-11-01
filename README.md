@@ -1,18 +1,20 @@
-# React + Vite
+# QuoteFlow
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+QuoteFlow is an Altis Elevators quotation generator. This repository currently contains only the Step 1 catalogue foundation; it does not yet implement quotation entry, PDF generation, authentication, a backend, or live Excel synchronization.
 
-Currently, two official plugins are available:
+## Commands
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+```sh
+npm ci
+npm run catalogue:build
+npm run catalogue:check
+npm run lint
+npm run build
+```
 
-## React Compiler
+`catalogue:build` reads `data/source/lift-models.xlsx` and deterministically generates:
 
-The React Compiler is enabled on this template. See [this documentation](https://react.dev/learn/react-compiler) for more information.
+- `src/data/catalogue/liftCatalogue.json` — source-traceable catalogue records for the application
+- `data/reports/liftCatalogue.validation.json` — duplicate, invalid-row, and source-schema findings
 
-Note: This will impact Vite dev & build performances.
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+Run `catalogue:check` in CI to ensure generated data has not gone stale. Source-field mapping and unresolved source-data questions are documented in [`docs/catalogue-data-notes.md`](docs/catalogue-data-notes.md).

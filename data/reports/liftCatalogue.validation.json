@@ -1,0 +1,74 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "workbook": "data/source/lift-models.xlsx",
+    "sheet": "Sheet1",
+    "headerRow": 3
+  },
+  "summary": {
+    "sourceRowsAfterHeader": 49,
+    "validRecords": 49,
+    "invalidRows": 0,
+    "duplicateSourceIds": 0,
+    "duplicateConfigurations": 0,
+    "recordsWithDataQualityIssues": 1
+  },
+  "invalidRows": [],
+  "duplicateSourceIds": [],
+  "duplicateConfigurations": [],
+  "recordDataQualityIssues": [
+    {
+      "sourceRecordId": "16",
+      "sourceRow": 19,
+      "issues": [
+        {
+          "code": "missing_technical_values",
+          "message": "One or more mapped technical values are blank.",
+          "fields": [
+            "rope"
+          ]
+        }
+      ]
+    }
+  ],
+  "sourceHeaderIssues": [
+    {
+      "code": "generic_headers",
+      "message": "Columns M and N use generic headers and are not interpreted as technical specifications.",
+      "columns": [
+        "M",
+        "N"
+      ],
+      "headers": [
+        "Field2",
+        "Field1"
+      ]
+    },
+    {
+      "code": "unlabelled_column",
+      "message": "Column K has no header and is not interpreted as a technical specification.",
+      "column": "K"
+    },
+    {
+      "code": "duplicate_lift_type_columns",
+      "message": "Columns C and J both describe lift type and are retained separately.",
+      "columns": [
+        "C",
+        "J"
+      ],
+      "headers": [
+        "Type of Lift",
+        "Type of Lift"
+      ]
+    },
+    {
+      "code": "terms_columns_unclassified",
+      "message": "Columns O, P, and R are labelled as terms but their business role is not established.",
+      "columns": [
+        "O",
+        "P",
+        "R"
+      ]
+    }
+  ]
+}

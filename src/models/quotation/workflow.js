@@ -1,0 +1,36 @@
+export const WORKFLOW_STEPS = [
+  { id: "customer", label: "Customer", paths: ["reference.", "metadata.", "customer."] },
+  { id: "installation", label: "Lift & installation", paths: ["lift."] },
+  { id: "materials", label: "Materials", paths: ["materials."] },
+  { id: "commercial", label: "Commercial terms", paths: ["commercial."] },
+  { id: "review", label: "Review & PDF", paths: [] },
+];
+
+const REQUIRED_COUNTS = { customer: 7, installation: 8, materials: 11, commercial: 9, review: 0 };
+
+export function workflowSectionForPath(path) {
+  return WORKFLOW_STEPS.find((step) => step.paths.some((prefix) => path.startsWith(prefix)))?.id ?? "review";
+}
+
+export function getWorkflowProgress(documentData, visited = new Set(), attempted = new Set(), currentStep = "customer") {
+  const missingBySection = new Map(WORKFLOW_STEPS.map((step) => [step.id, []]));
+  documentData.missing.forEach((entry) => missingBySection.get(workflowSectionForPath(entry.path)).push(entry));
+  return WORKFLOW_STEPS.map((step) => {
+    const missing = missingBySection.get(step.id);
+    const required = REQUIRED_COUNTS[step.id];
+    const completed = Math.max(0, required - missing.length);
+    let state = "not-started";
+    if (step.id === currentStep) state = "current";
+    else if (required === 0 || missing.length === 0) state = "complete";
+    else if (attempted.has(step.id)) state = "incomplete";
+    else if (visited.has(step.id)) state = "in-progress";
+    return { ...step, required, completed, missing, state };
+  });
+}
+
+export function overallCompletion(progress) {
+  const applicable = progress.filter((step) => step.required > 0);
+  const required = applicable.reduce((sum, step) => sum + step.required, 0);
+  const completed = applicable.reduce((sum, step) => sum + step.completed, 0);
+  return { completed, required, percent: required ? Math.round((completed / required) * 100) : 100 };
+}
