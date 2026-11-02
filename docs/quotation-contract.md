@@ -33,6 +33,12 @@ This is the concise implementation contract for routine QuoteFlow work. It is de
 
 The Doors material is independent of car-protection. No passenger/load capacity is inferred from a lift model.
 
+Employee-entry shortcuts: `src/app/entryOptions.js` contains curated passenger/load pairs and material descriptions. These are explicit employee selections, not catalogue standards or defaults; custom values remain editable. No customer records or commercial history are bundled.
+
+Tax-description choices offer the original template wording, 50%/100% GST bill wording, and custom entry; these strings do not calculate tax or alter price. Advanced technical choices reuse exact values from the same approved catalogue field (speed, door/frame/protection, motor, controller, rope). They do not certify compatibility across configurations. Ambiguous rope spelling `1 3 mm` is not offered as a shortcut; original source and saved values remain intact. Category, ambiguous rescue notes, and remaining free-form fields stay text inputs.
+
+Altis convention (owner-confirmed): the PDF's existing “Travel Height” field represents total floors served including Ground, not a physical distance. Explicit standard floor edits set it to `upperFloors + 1`; custom arrangements remain editable. Opening a saved draft or editing dimensions does not rewrite its saved travel wording. Schema v4, draft migrations, and PDF labels remain unchanged.
+
 ## Required for final export
 
 - Reference number, office code, financial year, date; customer address, recipient name, and project location.
@@ -62,6 +68,8 @@ Shaft measurement, car size, cabin opening, acceptance name/date, and Auto Rescu
 | 6 Obligations | `pages.obligations` | Approved static obligations and footer date |
 
 Shared values: quantity and capacity appear on Pages 2–3; project location drives the cover subject and Page 3; controller/rope/motor drive Page 5; date is used on Page 1 and page footers.
+
+PDF presentation: pages are fixed at 612 × 792 points and use measured reference anchors. `src/pdf/documentPresentation.js` formats dates and the resolved INR amount for display only; it validates actual page geometry and printable text regions after layout. Unusually long text fails PDF generation explicitly rather than clipping. Preview and download share one BlobProvider URL; final download remains gated by resolver readiness and successful rendering. Company-only images were extracted into `public/assets/altis-emblem.png` and `altis-watermark.png`; the private reference PDF remains unchanged and ignored. `node scripts/render-quotation-samples.mjs` creates four synthetic, ignored local samples; `scripts/verify-quotation-samples.py` independently checks their PDF objects and extracted content using pypdf.
 
 ## Data caveats and migrations
 
