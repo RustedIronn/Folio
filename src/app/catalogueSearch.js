@@ -12,6 +12,17 @@ export function configurationCharacteristics(record) {
   return [record.technical.speed, record.technical.carProtectionDoor, record.technical.doorFrame].filter(Boolean).join(" · ");
 }
 
+export function cataloguePickerOption(record) {
+  return {
+    value: record.sourceRecordId,
+    label: configurationName(record),
+    sourceId: record.sourceRecordId,
+    category: record.technical.liftType || "Lift type not recorded",
+    description: record.quantityType || "Configuration description not recorded",
+    characteristics: configurationCharacteristics(record),
+  };
+}
+
 function searchableFields(record) {
   return {
     description: normaliseCatalogueSearch(record.quantityType),

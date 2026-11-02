@@ -56,10 +56,17 @@ function withInstallationProject(next) {
   return next;
 }
 export function setFloorMode(quotation, mode) {
-  const next = structuredClone(quotation); next.lift.installation.floorMode = mode; return withInstallationProject(next);
+  const next = structuredClone(quotation); next.lift.installation.floorMode = mode;
+  if (mode === "standard") next.lift.project.travelHeight = altisTotalFloors(next.lift.installation.upperFloors);
+  return withInstallationProject(next);
+}
+export function altisTotalFloors(upperFloors) {
+  return /^\d+$/.test(String(upperFloors ?? "")) ? String(Number(upperFloors) + 1) : "";
 }
 export function setUpperFloors(quotation, value) {
-  const next = structuredClone(quotation); next.lift.installation.upperFloors = value; return withInstallationProject(next);
+  const next = structuredClone(quotation); next.lift.installation.upperFloors = value;
+  if (next.lift.installation.floorMode === "standard") next.lift.project.travelHeight = altisTotalFloors(value);
+  return withInstallationProject(next);
 }
 export function setCustomFloorValue(quotation, key, value) {
   const next = structuredClone(quotation); next.lift.installation[key] = value; return withInstallationProject(next);

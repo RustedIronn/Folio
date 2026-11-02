@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { configurationCharacteristics, configurationName, normaliseCatalogueSearch, searchCatalogue } from "../src/app/catalogueSearch.js";
+import { cataloguePickerOption, configurationCharacteristics, configurationName, normaliseCatalogueSearch, searchCatalogue } from "../src/app/catalogueSearch.js";
 
 const records = [
   { sourceRecordId: "2", quantityType: "SS Big Vision Power Operated Door Lift", technical: { liftType: "Hydraulic Lift", speed: "0.50 mtr/sec", carProtectionDoor: "SS Big Vision Door", doorFrame: "SS Door Frames", motor: "Hydraulic power pack", controller: "Micro Processor Controller", rope: "8 mm rope", landingProtection: "SS Big Vision Door" } },
@@ -21,4 +21,16 @@ test("catalogue search returns an empty result without inventing a match", () =>
   assert.deepEqual(searchCatalogue(records, { search: "unapproved capacity" }), []);
   assert.equal(configurationName(records[0]), "#2 · Hydraulic Lift — SS Big Vision Power Operated Door Lift");
   assert.match(configurationCharacteristics(records[0]), /0.50 mtr\/sec/);
+});
+
+test("catalogue picker options keep approved identifiers separate from readable result details", () => {
+  const option = cataloguePickerOption(records[0]);
+  assert.deepEqual(option, {
+    value: "2",
+    sourceId: "2",
+    label: "#2 · Hydraulic Lift — SS Big Vision Power Operated Door Lift",
+    category: "Hydraulic Lift",
+    description: "SS Big Vision Power Operated Door Lift",
+    characteristics: "0.50 mtr/sec · SS Big Vision Door · SS Door Frames",
+  });
 });

@@ -1,23 +1,24 @@
-function SummaryRow({ label, value }) {
-  if (!String(value ?? "").trim()) return null;
-  return <div><dt>{label}</dt><dd>{value}</dd></div>;
-}
+import { FileText } from "lucide-react";
 
 export default function WorkspaceSummary({ workflow }) {
-  const { resolved, exportReady } = workflow;
-  const { installation, priceSchedule } = resolved.pages;
-  const liftDetails = [installation.quantityAndType, installation.project.capacity].filter(Boolean).join(" · ");
-
-  return <aside className="workspace-summary" aria-label="Quotation at a glance">
-    <p className="summary-kicker">Live document</p>
-    <div className="summary-title-row"><h2>At a glance</h2><span className={exportReady ? "readiness ready" : "readiness"}>{exportReady ? "Ready" : "Draft"}</span></div>
-    <dl>
-      <SummaryRow label="Recipient" value={resolved.pages.cover.attention} />
-      <SummaryRow label="Project" value={priceSchedule.projectLocation} />
-      <SummaryRow label="Lift" value={liftDetails} />
-      <SummaryRow label="Price" value={priceSchedule.price.formatted} />
-      <SummaryRow label="Delivery" value={priceSchedule.delivery} />
+  const { resolved } = workflow;
+  const { cover, priceSchedule } = resolved.pages;
+  return <aside className="workspace-summary" aria-label="Live cover letter">
+    <div className="paper-preview-label"><span>Live cover letter</span><FileText size={13} aria-hidden="true" /></div>
+    <div className="paper-preview">
+      <img src="/assets/altis-emblem.png" alt="Altis Elevators" />
+      <div className="paper-rule" />
+      <div className="paper-reference">{cover.reference || "Quotation reference pending"}</div>
+      <h3>{cover.attention || "Your recipient"}</h3>
+      <p>{cover.customer.address || "The customer address will appear here as you enter it."}</p>
+      <div className="paper-subject">{cover.subject || "Your quotation subject"}</div>
+      <div className="paper-preview-foot" aria-hidden="true"><span /><span /><span /></div>
+    </div>
+    <p className="summary-document-note">A live summary of your details. The final document uses the approved six-page Altis template.</p>
+    <dl className="summary-facts">
+      {cover.date && <div><dt>Quotation date</dt><dd>{cover.date}</dd></div>}
+      {priceSchedule.projectLocation && <div><dt>Project</dt><dd>{priceSchedule.projectLocation}</dd></div>}
+      {priceSchedule.price.formatted && <div><dt>Quotation value</dt><dd>{priceSchedule.price.formatted}</dd></div>}
     </dl>
-    {!exportReady && <p className="summary-note">{resolved.missing.length} required item{resolved.missing.length === 1 ? "" : "s"} remain before download.</p>}
   </aside>;
 }
