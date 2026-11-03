@@ -17,7 +17,7 @@ The Lift & installation screen has an **Add model** action. Users register with 
    | `VITE_FIREBASE_APP_ID` | `appId` |
 
 5. Use Node 22.12+ or Node 24. Run `npm ci` and `npm run dev`. Register, verify the email, then use **I've verified my email**. Verification can be resent without creating another account.
-6. For the existing Vercel deployment, replace the old Supabase environment entries with the four Firebase values above and rebuild when this feature is approved for release. Vite embeds public configuration at build time. No deployment, Git push, hosting migration, or external account creation was performed by this implementation.
+6. Keep the four Firebase values above configured in the existing Vercel project and rebuild after changing them. Vite embeds public configuration at build time. The Firebase workspace was released through the existing Git integration on 3 November 2026; see the release record below. No hosting migration or replacement project was needed.
 
 Use only the Firebase Web configuration, never service-account JSON or private keys. Analytics, Messaging, Storage, and Cloud Functions are not initialized.
 
@@ -62,9 +62,9 @@ Existing Edge passed the Firebase SDK integration with intercepted synthetic RES
 
 The owner confirmed publication of the rules and enabling Email/Password. A read-only live configuration check confirmed authorization of `127.0.0.1` and `quote-flow-azure.vercel.app`; a real anonymous model request returned HTTP 403 / `PERMISSION_DENIED`. These checks do not validate live email delivery or an authenticated save.
 
-Release verification subsequently installed checksum-verified Temurin Java 21 and the Firebase CLI/emulator. `npm run test:rules` now starts the isolated demo emulator automatically; `npm run test:emulators` passed all 84 tests without skips. The new private-draft rules remain unpublished because Firebase CLI is logged out; the earlier live checks above cover the previously deployed model rules only. See [release readiness](release-readiness-2026-11-03.md).
+Release verification subsequently installed checksum-verified Temurin Java 21 and the Firebase CLI/emulator. `npm run test:rules` now starts the isolated demo emulator automatically; `npm run test:emulators` passed all 84 tests without skips. On 3 November 2026, the expanded rules were published and independently matched to the tested file. Real Firebase acceptance verified shared-model creation and second-account visibility, private drafts and production PDF generation; the employee workspace was deployed to the existing Vercel site. See [release readiness](release-readiness-2026-11-03.md).
 
-Before release, register one real test account, confirm the email, save a clearly labelled test model, and confirm another verified account sees it after refresh. Check the actual downloaded six-page document too.
+Live release checks used synthetic accounts provisioned through authorized administrative access, including verified and unverified cases. No real customer data was used. Mailbox delivery and clicking a real verification email remain manual operational checks; normal Firebase password login, verification claims, shared-model persistence, account isolation and the downloaded six-page document were tested against the live backend.
 
 ## Dependency note
 
