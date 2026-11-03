@@ -13,7 +13,7 @@ export default function FormField({ id, label, error, hint, required = false, ch
 
   return (
     <div className={`form-field ${error ? "has-error" : ""} ${className}`}>
-      <label htmlFor={id}>{label}{required && <span className="required-marker" aria-hidden="true">Required</span>}</label>
+      <label htmlFor={id}>{label}{required && <span className="required-marker" aria-hidden="true">*</span>}</label>
       {control}
       {hint && <p id={hintId} className="field-hint">{hint}</p>}
       {error && <p id={errorId} className="field-error" role="alert">{error}</p>}

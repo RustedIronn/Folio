@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowUpRight, Boxes, Building2, Check, FileCheck2, FileText, IndianRupee, RotateCcw, UserRound } from "lucide-react";
+import { Boxes, Building2, Check, FileCheck2, FileText, IndianRupee, RotateCcw, UserRound } from "lucide-react";
 import CustomerStep from "./steps/CustomerStep.jsx";
 import LiftStep from "./steps/LiftStep.jsx";
 import MaterialsStep from "./steps/MaterialsStep.jsx";
@@ -41,19 +41,18 @@ export default function App() {
       <div className="rail-caption">THIS QUOTATION</div>
       <nav className="rail-navigation" aria-label="Quotation sections">{workflowProgress.map((step) => {
         const Icon = ICONS[step.id];
-        return <button type="button" key={step.id} aria-current={step.id === currentStep ? "step" : undefined} onClick={() => workflow.visitStep(step.id)}><Icon size={17} aria-hidden="true" /><span>{step.label}</span>{step.state === "complete" && <Check size={14} aria-label="Complete" />}</button>;
+        return <button type="button" key={step.id} aria-current={step.id === currentStep ? "step" : undefined} aria-label={`${step.label}. ${stateLabel(step.state)}${step.required ? `. ${step.completed} of ${step.required} ready` : ""}`} onClick={() => workflow.visitStep(step.id)}><Icon size={17} aria-hidden="true" /><span><strong>{step.label}</strong><small>{step.required ? `${step.completed}/${step.required} ready` : stateLabel(step.state)}</small></span>{step.state === "complete" && <Check size={14} aria-label="Complete" />}</button>;
       })}</nav>
       <div className="rail-bottom">
         <div className="rail-completion"><div><span>Required details ready</span><strong>{overallProgress.percent}%</strong></div><progress max="100" value={overallProgress.percent} aria-label="Required details ready, including Altis standards" /><small>{overallProgress.completed} of {overallProgress.required} ready · includes standards</small></div>
-        <div className={`draft-save save-status-${saveStatus}`} role="status"><span />{draftSaveLabel(workflow.drafts)}</div>
         <Button variant="tertiary" className="rail-reset" onClick={() => setShowReset(true)}><RotateCcw size={14} aria-hidden="true" />Reset quotation</Button>
         <div className="rail-business"><span>AE</span><div><strong>Altis Elevators</strong><small>Quotation workspace</small></div></div>
       </div>
     </aside>
     <div className="product-body">
-      <header className="product-topbar"><div><span>Workspace</span><span>/</span><strong>{reference || "New quotation"}</strong><span className="topbar-draft">{workflow.documentAccess.canDownload ? "Ready" : workflow.exportReady ? "Details complete" : "Draft"}</span></div><div className="topbar-actions"><Button variant="secondary" onClick={() => workflow.visitStep("review")}>Review quotation<ArrowUpRight size={15} aria-hidden="true" /></Button><AccountControls workflow={workflow} /></div></header>
+      <header className="product-topbar"><div className="topbar-reference"><strong>{reference || "New quotation"}</strong><span className="topbar-draft">{workflow.documentAccess.canDownload ? "Ready" : workflow.exportReady ? "Details complete" : "Draft"}</span></div><div className="topbar-actions"><div className={`draft-save save-status-${saveStatus}`} role="status"><span aria-hidden="true" />{draftSaveLabel(workflow.drafts)}</div><AccountControls workflow={workflow} /></div></header>
       <div className="product-page">
-        <header className="page-intro"><div><p className="page-eyebrow">ALTIS ELEVATORS <span>/</span> QUOTATION STUDIO</p><h1>{COPY[currentStep][0]}</h1><p>{COPY[currentStep][1]}</p></div><div className="page-step"><span>{String(currentStepIndex + 1).padStart(2, "0")}</span><small>/ 05</small></div></header>
+        <header className="page-intro"><div><h1>{COPY[currentStep][0]}</h1><p>{COPY[currentStep][1]}</p></div>{currentStep !== "review" && <p className="field-legend"><span aria-hidden="true">*</span> Required fields</p>}</header>
         <CloudDraftsBar workflow={workflow} />
         <nav className="journey" aria-label="Quotation workflow">{workflowProgress.map((step, index) => <button key={step.id} type="button" className={`journey-step state-${step.state}`} aria-current={step.id === currentStep ? "step" : undefined} aria-label={`Step ${index + 1}: ${step.label}. ${stateLabel(step.state)}`} onClick={() => workflow.visitStep(step.id)}><span className="journey-number">{step.state === "complete" ? <Check size={15} /> : index + 1}</span><span><strong>{step.label}</strong><small>{step.required ? `${step.completed}/${step.required} ready` : stateLabel(step.state)}</small></span></button>)}</nav>
         <p className="mobile-current-step">Step {currentStepIndex + 1} of 5 · {current.label}</p>

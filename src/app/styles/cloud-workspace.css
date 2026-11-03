@@ -5,9 +5,6 @@
 .product-topbar { flex-wrap: wrap; }
 .product-topbar > div:first-child { min-width: 0; flex-wrap: wrap; }
 .cloud-workspace { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 22px; padding: 14px 0; border-block: 1px solid var(--line); }
-.cloud-workspace-status { display: grid; gap: 4px; font-size: 12px; }
-.cloud-workspace-status strong { color: var(--forest); font-size: 13px; }
-.cloud-workspace-status span { color: var(--muted); }
 .cloud-workspace-notice { width: 100%; margin: 0; font-size: 12px; color: var(--forest); }
 .cloud-workspace-error, .cloud-workspace-conflict { width: 100%; padding: 16px; background: #faf0dc; border-radius: var(--radius-control); font-size: 13px; }
 .cloud-workspace-error p, .cloud-workspace-conflict p { line-height: 1.6; margin: 7px 0 12px; }
@@ -18,4 +15,4 @@
 .pdf-account-gate { padding: 30px; border: 1px solid var(--line); border-radius: var(--radius-surface); background: var(--paper); text-align: center; }
 .pdf-account-gate h3 { margin-top: 0; color: var(--forest); }
 .pdf-account-gate p { color: var(--muted); line-height: 1.6; }
-@media(max-width: 580px) { .product-topbar { align-items: center; flex-wrap: nowrap; gap:10px; }.product-topbar .topbar-actions { width:auto;flex:0 0 auto; }.topbar-actions > .button { display:none; }.product-topbar .account-controls .button { font-size:12px;padding:10px 12px; }.cloud-workspace.is-guest { margin:0;border:0;padding:0; }.cloud-workspace.is-guest > .cloud-workspace-status,.cloud-workspace.is-guest > .button { display:none; }.account-controls .account-email { max-width: 145px; }.product-topbar .account-controls .button { min-height: 44px; }.cloud-drafts-control { flex-basis: 100%; min-width: 0; }.cloud-workspace > .button { width: 100%; min-height: 44px; }.cloud-workspace-conflict > div .button { width: 100%; }.pdf-account-gate { padding: 24px 16px; } }
+@media(max-width: 580px) { .product-topbar { align-items: center; flex-wrap: nowrap; gap:10px; }.product-topbar .topbar-actions { width:auto;flex:0 0 auto; }.topbar-actions > .button { display:none; }.product-topbar .account-controls .button { font-size:12px;padding:10px 12px; }.cloud-workspace.is-guest { margin:0;border:0;padding:0; }.account-controls .account-email { max-width: 145px; }.product-topbar .account-controls .button { min-height: 44px; }.cloud-drafts-control { flex-basis: 100%; min-width: 0; }.cloud-workspace > .button { width: 100%; min-height: 44px; }.cloud-workspace-conflict > div .button { width: 100%; }.pdf-account-gate { padding: 24px 16px; } }

@@ -8,7 +8,6 @@ export default function WorkspaceSummary({ workflow }) {
     <div className="paper-preview">
       <img src="/assets/altis-emblem.png" alt="Altis Elevators" />
       <div className="paper-rule" />
-      <div className="paper-reference">{cover.reference || "Quotation reference pending"}</div>
       <h3>{cover.attention || "Your recipient"}</h3>
       <p>{cover.customer.address || "The customer address will appear here as you enter it."}</p>
       <div className="paper-subject">{cover.subject || "Your quotation subject"}</div>
