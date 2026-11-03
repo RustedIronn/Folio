@@ -20,6 +20,15 @@ export function displayTravelHeight(value) {
   return /^\d+$/.test(travel) ? `G + ${travel}` : travel;
 }
 
+export function displayDimensions(value, axes) {
+  const dimensions = String(value ?? "").trim();
+  const match = dimensions.match(/^(\d+(?:\.\d+)?)\s*[x×]\s*(\d+(?:\.\d+)?)(?:\s*[x×]\s*(\d+(?:\.\d+)?))?\s*(mm)?$/i);
+  if (!match) return dimensions;
+  const parts = match.slice(1, 4).filter((part) => part !== undefined);
+  if (parts.length > axes.length) return dimensions;
+  return parts.map((part, index) => `${part} (${axes[index]})`).join(" × ") + (match[4] ? " mm" : "");
+}
+
 // PDF generation must fail explicitly rather than return clipped printable content.
 // React PDF exposes the same layout tree to both its browser and Node onRender callbacks.
 export function assertDocumentLayout({ _INTERNAL__LAYOUT__DATA_: layout }) {

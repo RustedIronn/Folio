@@ -4,7 +4,7 @@ import path from "node:path";
 import { transform } from "esbuild";
 import React from "react";
 import { renderToBuffer } from "@react-pdf/renderer";
-import { createQuotation, applyConfiguration, resolveQuotationDocument, setUpperFloors, setTechnicalOverride, setMaterialOverride } from "../src/models/quotation/quotation.js";
+import { createQuotation, applyConfiguration, resolveQuotationDocument, setUpperFloors, setTechnicalOverride, setMaterialOverride, setDimensionValue } from "../src/models/quotation/quotation.js";
 import { ALTIS_QUOTATION_TEMPLATE as template } from "../src/templates/altisQuotationTemplate.js";
 
 const root = path.resolve(import.meta.dirname, "..");
@@ -43,6 +43,7 @@ export function sampleCases() {
   custom = setTechnicalOverride(custom, "motor", "Custom motor for this quotation", catalogue, template);
   custom = setMaterialOverride(custom, "cabin", "Quotation-specific cabin finish", template);
   custom.commercial.taxDescription = "100%GST bill Included";
+  for (const [group, field, value] of [["shaft", "width", "1800"], ["shaft", "depth", "1650"], ["car", "width", "1100"], ["car", "depth", "1400"], ["car", "height", "2100"]]) custom = setDimensionValue(custom, group, field, value);
   const long = sampleQuotation();
   long.customer.address = "Example building, industrial estate, project office and installation entrance. ".repeat(4).slice(0, 300);
   long.customer.attentionName = "Synthetic recipient for the quotation review team and project coordination office";

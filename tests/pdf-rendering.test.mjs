@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { renderQuotation, sampleCases, sampleQuotation } from "../scripts/pdf-test-support.mjs";
-import { displayDate, displayPrice, displayCapacity, displayTravelHeight } from "../src/pdf/documentPresentation.js";
+import { displayDate, displayPrice, displayCapacity, displayTravelHeight, displayDimensions } from "../src/pdf/documentPresentation.js";
 
 test("PDF presentation formats resolved values without changing calculations or legacy wording", () => {
   assert.equal(displayDate("2026-11-02"), "02.11.2026");
@@ -20,6 +20,15 @@ test("PDF travel prefix preserves missing values and existing custom wording", (
   assert.equal(displayTravelHeight("0"), "G + 0");
   for (const value of ["", " ", null, undefined]) assert.equal(displayTravelHeight(value), "");
   for (const value of ["G + 4", "G+4", "Ground + 4 upper floors", "Custom arrangement"]) assert.equal(displayTravelHeight(value), value);
+});
+
+test("PDF dimensions label axes without changing values, units or custom descriptions", () => {
+  assert.equal(displayDimensions("1800 × 1650 mm", ["W", "D"]), "1800 (W) × 1650 (D) mm");
+  assert.equal(displayDimensions("1100 x 1400 x 2100 mm", ["W", "D", "H"]), "1100 (W) × 1400 (D) × 2100 (H) mm");
+  assert.equal(displayDimensions("1100 x 1400 mm", ["W", "D", "H"]), "1100 (W) × 1400 (D) mm");
+  assert.equal(displayDimensions("1800.5 x 1650", ["W", "D"]), "1800.5 (W) × 1650 (D)");
+  for (const value of ["", null, undefined]) assert.equal(displayDimensions(value, ["W", "D"]), "");
+  for (const value of ["1800 (W) × 1650 (D) mm", "As per site", "1800 x", "180 x 165 cm", "1800 x 1650 x 2100 mm"]) assert.equal(displayDimensions(value, ["W", "D"]), value);
 });
 
 for (const [name, quotation] of Object.entries(sampleCases())) {

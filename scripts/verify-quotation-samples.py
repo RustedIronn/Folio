@@ -29,6 +29,6 @@ for filename, expected in manifest.items():
         if index > 0:
             assert 'Executive Signature:' in text and 'Customer Signature:' in text
         if index == 2 and expected[index][2]:
-            assert any(normalize(expected[index][2]) in normalize(value) and 'Helvetica-Bold' in font for value, font in runs), (filename, 'price amount font')
+            assert any(normalize(expected[index][2]) in normalize(value) and 'Times-Bold' in font for value, font in runs), (filename, 'price amount font')
     assert len(pdf.pages[0].images) >= 2, 'Missing cover emblem'
     print(f'{filename}: six Letter pages; branding, dynamic fields and all contract text verified')

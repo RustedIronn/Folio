@@ -1,12 +1,11 @@
 import React from "react";
 import { Document, Font, Image, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
-import { assertDocumentLayout, displayCapacity, displayDate, displayPrice, displayTravelHeight, LETTER } from "./documentPresentation.js";
+import { assertDocumentLayout, displayCapacity, displayDate, displayDimensions, displayPrice, displayTravelHeight, LETTER } from "./documentPresentation.js";
 
 Font.registerHyphenationCallback((word) => [word]);
 const s = StyleSheet.create({
   page: { width: LETTER.width, height: LETTER.height, minHeight: LETTER.height, maxHeight: LETTER.height, fontFamily: "Times-Roman", fontSize: 11, lineHeight: 1.23, color: "#000" },
   region: { position: "absolute", flexShrink: 0 }, text: { flexShrink: 0 }, bold: { fontFamily: "Times-Bold" },
-  priceAmount: { fontFamily: "Helvetica-Bold", fontSize: 11 },
   heading: { position: "absolute", left: 72, width: 468, fontFamily: "Times-Bold", fontSize: 11.5, textAlign: "center", textDecoration: "underline" },
   watermark: { position: "absolute", left: 156, top: 247.15, width: 300, height: 300 },
   sidebar: { position: "absolute", top: 0, left: 22.8, width: 18.4, height: 792, backgroundColor: "#148133" },
@@ -71,7 +70,7 @@ function KeyValueTable({ rows, small = false }) {
 }
 function InstallationPage({ page, ...props }) {
   const t = page.technical; const p = page.project;
-  const rows = [["Quantity & Type:", page.quantityAndType], ["Capacity:", p.capacity], ["Speed:", t.speed], ["Travel Height:", displayTravelHeight(p.travelHeight)], ["No of Floors:", p.floors], ["No of Landings:", p.landings], ["Shaft Measurement (approx.)", p.shaftMeasurement], ["Car Size (approx.)", p.carSize], ["Entrance door frame", t.doorFrame], ["Type & Design of Car:", page.carDesign], ["Type of Car protection:", t.carProtectionDoor], ["Type of Landing protection:", t.landingProtection], ["Cabin Cutting", p.cabinCutting, 28.8], ["Cabin opening (approx.)", p.cabinOpening]];
+  const rows = [["Quantity & Type:", page.quantityAndType], ["Capacity:", p.capacity], ["Speed:", t.speed], ["Travel Height:", displayTravelHeight(p.travelHeight)], ["No of Floors:", p.floors], ["No of Landings:", p.landings], ["Shaft Measurement (approx.)", displayDimensions(p.shaftMeasurement, ["W", "D"])], ["Car Size (approx.)", displayDimensions(p.carSize, ["W", "D", "H"])], ["Entrance door frame", t.doorFrame], ["Type & Design of Car:", page.carDesign], ["Type of Car protection:", t.carProtectionDoor], ["Type of Landing protection:", t.landingProtection], ["Cabin Cutting", p.cabinCutting, 28.8], ["Cabin opening (approx.)", p.cabinOpening]];
   const small = rows.reduce((total, row) => total + safe(row[1]).length, 0) > 1100;
   return <PdfPage page={page} {...props}><Heading top={106}>NEW ELEVATOR INSTALLATION</Heading>
     <Region name="Installation table" left={66.4} top={146.8} width={443.4} height={445} style={{ fontSize: small ? 9.5 : 11 }}>
@@ -89,7 +88,7 @@ function PricePage({ page, ...props }) {
     <Region name="Price introduction" top={176} height={43}><Text style={[s.text, { textAlign: "justify", textIndent: 57 }]}>We agree to supply, deliver all the required materials and to install {safe(page.quantity)} No of “Altis Elevator” {displayCapacity(page.capacity)} Capacity Passenger Elevators for your Building at, {safe(page.projectLocation)}.</Text></Region>
     <Region name="Price contract introduction" top={222} height={43}><Text style={[s.text, { textAlign: "justify" }]}>This offer accepted by you shall constitute the contract between us to make this offer a legal and valid contract binding on both parties.</Text></Region>
     <Region name="Commercial heading" top={275} height={20}><Text style={[s.bold, { textDecoration: "underline" }]}>Commercial Terms & Conditions: -</Text></Region>
-    <Region name="Price amount" top={315} height={34}><Text style={s.bold}><Text style={{ textDecoration: "underline" }}>Price:</Text> <Text style={s.priceAmount}>{displayPrice(page.price.formatted)}</Text>{page.price.words ? ` (${page.price.words}).` : ""}</Text></Region>
+    <Region name="Price amount" top={315} height={34}><Text style={s.bold}><Text style={{ textDecoration: "underline" }}>Price:</Text> {displayPrice(page.price.formatted)}{page.price.words ? ` (${page.price.words}).` : ""}</Text></Region>
     <Region name="Commercial terms" top={354} height={102}>{terms.map(([label, value]) => <View key={label} style={s.commercialRow}><Text style={s.commercialLabel}>{label}</Text><Text style={[s.commercialValue, { fontSize: terms.some(([, text]) => safe(text).length > 170) ? 9.5 : 11 }]}>: {safe(value)}</Text></View>)}</Region>
     <Region name="Payment heading" top={462} height={20}><Text style={[s.bold, { textDecoration: "underline" }]}>Terms of Payments</Text></Region>
     <Region name="Payment stages" top={489} height={46}>{page.payment.map((stage) => <Text key={stage.key} style={s.text}>{safe(stage.percentage)}% {stage.description}</Text>)}</Region>
