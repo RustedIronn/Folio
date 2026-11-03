@@ -1,133 +1,224 @@
 # QuoteFlow
 
-QuoteFlow is a local-first quotation workspace for Altis Elevators. It guides an employee through preparing a lift quotation, resolves catalogue and template values into one document model, and produces a six-page PDF ready for review and download.
+QuoteFlow is a quotation workspace developed for **Altis Elevators**. It brings lift selection, project details, commercial terms and document preparation into one guided workflow, reducing repeated entry while keeping quotations consistent with the company's catalogue and approved format.
 
-It is designed to reduce repeated entry while preserving the source record, approved wording, and quotation-specific choices behind every generated document.
+**[Open the live application](https://quote-flow-azure.vercel.app/)**
 
-## Workflow
+The application is deployed on Vercel with Firebase Authentication and Cloud Firestore. Visitors can begin a quotation locally; verified accounts can save private drafts across devices, add shared lift models, and generate six-page quotation PDFs.
 
-1. Enter customer, reference, and project details.
-2. Select one of the validated lift configurations.
-3. Add only project-specific installation values and deliberate technical overrides.
-4. Confirm the materials schedule and commercial terms.
-5. Review the resolved quotation, preview the PDF, and download it when all required information is complete.
+## Quotation workflow
 
-The review screen and the PDF renderer use the same resolved-document object. A draft can be previewed with incomplete fields left blank, but final download is available only when export-readiness validation passes.
+| Step | What the employee does |
+| --- | --- |
+| **1. Customer** | Enter the reference, date, recipient, address and project location. |
+| **2. Lift & installation** | Search configurations, enter capacity and site measurements, and make explicit technical overrides. |
+| **3. Materials** | Review catalogue-derived and standard specifications; customize the quotation where needed. |
+| **4. Commercial terms** | Enter the INR price and confirm tax wording, delivery, payment stages and other terms. |
+| **5. Review & PDF** | Resolve missing details, inspect the quotation, choose a PDF version and download when ready. |
 
-## Implemented features
+Employees can move directly between sections. Inputs are retained while navigating, and missing-detail links lead back to the relevant controls.
 
-- Guided five-step employee workflow: Customer, Lift & installation, Materials, Commercial terms, and Review & PDF.
-- Public visitor entry with local guest drafts; verified employee sign-in preserves guest input and imports it without overwriting saved quotations.
-- Private per-user Firestore draft autosave, cross-device restoration, account-isolated local recovery, and explicit conflict handling.
-- Searchable selection from 49 Excel-derived lift configurations, retaining each source record ID and workbook row.
-- Shared, employee-added lift models through Firebase Authentication and Cloud Firestore, with personal-email registration, email verification, and sign-in. Shared models stay separate from the approved Excel catalogue.
-- Catalogue autofill with quotation-level technical and material overrides, restoration to the catalogue/template value, and confirmation before configuration changes discard dependent values.
-- Structured reference-number composition, Indian financial-year suggestion, floor/landing descriptions, dimensions, capacity inputs, and INR amount-in-words formatting.
-- Approved commercial defaults that remain quotation-specific and editable.
-- A unified resolver that supplies consistent values across the review screen and all six PDF pages.
-- Employee-only draft PDF preview and final export using `@react-pdf/renderer`, with final download also gated by quotation completeness.
-- Responsive, keyboard-accessible workspace with Altis green and gold visual styling.
+## Key features
+
+- **49 Excel-derived configurations:** searchable by description, category and approved technical characteristics, with source IDs and workbook rows retained.
+- **Controlled customization:** technical and material overrides apply to the quotation; original catalogue values remain intact and can be restored.
+- **Practical entry controls:** structured dimensions, standard/custom floor arrangements, financial-year suggestions, and Indian price formatting with amount in words.
+- **Firebase sign-in:** email/password registration, email verification and guest-to-account continuity without replacing existing saved quotations.
+- **Private cloud autosave:** per-user drafts, cross-device restoration, local recovery copies and explicit choices when saved versions conflict.
+- **Shared lift models:** verified users can add models to a separate shared library without changing the original Excel catalogue.
+- **Two six-page PDF options:** Branded and Print-friendly, generated from the same quotation data used by Review.
+- **Responsive workflow:** desktop and mobile layouts, keyboard navigation, contextual editing links and visible save feedback.
+
+## Screenshots
+
+These are real captures of the deployed application using **synthetic quotation data** in an isolated visitor session. Names, addresses, amounts and editable commercial wording shown here are illustrative; they are not customer records, historical prices or approved specification examples.
+
+**Customer workspace and live quotation summary**
+
+![QuoteFlow customer workspace with a synthetic recipient and project](docs/screenshots/customer-workspace.png)
+
+**Price entry and quotation-specific commercial wording**
+
+![QuoteFlow pricing controls with an illustrative INR amount and synthetic terms](docs/screenshots/quotation-pricing.png)
+
+Altis branding visible in these screenshots remains subject to the proprietary-materials notice below.
+
+## PDF preview and export
+
+Both versions use the same resolved quotation and retain its six-page structure, technical values, commercial terms and contractual body text.
+
+| Version | Presentation |
+| --- | --- |
+| **Branded** | Original Altis logo, watermark, green sidebar, ISO statement and yellow company-contact box, with date and signature footers. |
+| **Print-friendly** | Text and black table borders, without images, watermark, green sidebar, ISO statement or the yellow contact box. **Date and executive/customer signature footers on Pages 2–6 are retained.** |
+
+A verified account is required for PDF generation. Incomplete quotations can be previewed with missing values left blank; final download requires export readiness and successful rendering. The version selector regenerates the preview and matching download together. Filenames use the quotation reference, with `-print-friendly` added for that version.
 
 ## Technology
 
-- React 19 and Vite
-- `@react-pdf/renderer` for client-side PDF preview and download
-- Base UI, Lucide React, and the modular Firebase Web SDK for accessible controls, icons, and shared model storage/authentication
-- SheetJS (`xlsx`) for deterministic catalogue conversion and validation
-- Native Node test runner and ESLint
+| Area | Stack |
+| --- | --- |
+| Application | React 19, Vite, JavaScript |
+| Interface | Base UI, Lucide React, CSS design tokens |
+| Accounts and persistence | Firebase Authentication, Cloud Firestore Lite, browser localStorage |
+| Documents | `@react-pdf/renderer` |
+| Catalogue tooling | SheetJS (`xlsx`), Node conversion and validation scripts |
+| Verification | Node test runner, Firestore rules-unit testing and emulator, ESLint |
+| Hosting | Vercel |
+
+## Architecture
+
+The application separates reference data, quotation state and document presentation:
+
+```text
+Authoritative Excel workbook
+    → conversion + validation
+    → versioned JSON catalogue
+          ↓
+Catalogue selection + quotation inputs + overrides + approved template
+          ↓
+Canonical quotation document resolver
+          ↓
+Review → Branded PDF / Print-friendly PDF
+```
+
+The JSON catalogue is a local application asset, not a live Excel connection. Conversion preserves record IDs, worksheet rows and unresolved source information. Employee-added models are stored separately in Firestore and carry their own identifiers.
+
+Quotation state uses schema v4. Review and both PDF versions consume the same resolved-document model; document components do not independently select specifications or calculate commercial values.
+
+| Data | Storage and access |
+| --- | --- |
+| Visitor quotation | Local browser draft; imported as a separate draft after verified sign-in. |
+| Employee quotations | Private Firestore drafts owned by that account, with account-scoped local recovery copies. |
+| Employee-added lift models | Shared Firestore collection available to verified accounts; separate from private quotations and the 49-record catalogue. |
+
+Cloud conflicts preserve alternatives rather than silently overwriting a newer quotation. Shared models are append-only through the application.
 
 ## Local development
 
-Use Node.js 22.12 or newer (Node 24 LTS is also supported) and npm.
+Use **Node.js 22.12+ or Node 24** and npm. Java 21+ is needed only for Firestore emulator checks.
 
 ```sh
-git clone <repository-url>
+git clone https://github.com/RustedIronn/QuoteFlow.git
 cd QuoteFlow
 npm ci
+cp .env.example .env.local
+```
+
+In PowerShell, `Copy-Item .env.example .env.local` can be used for the copy step.
+
+Fill the ignored `.env.local` file with the public Web app configuration for the Firebase project you intend to use:
+
+| Variable | Firebase Web configuration |
+| --- | --- |
+| `VITE_FIREBASE_API_KEY` | `apiKey` |
+| `VITE_FIREBASE_AUTH_DOMAIN` | `authDomain` |
+| `VITE_FIREBASE_PROJECT_ID` | `projectId` |
+| `VITE_FIREBASE_APP_ID` | `appId` |
+
+Enable Email/Password Authentication, configure Firestore with the repository's rules, and authorize the actual development hostname in Firebase Authentication. Follow the [Firebase setup guide](docs/shared-lift-models.md) for the complete configuration.
+
+```sh
 npm run dev
 ```
 
-Vite prints the local development address when it starts. Use `npm run build` to create a production bundle and `npm run preview` to serve that bundle locally.
+Open the address printed by Vite. Visitor entry and the approved catalogue are available without Firebase configuration; employee cloud features and PDF generation require a configured connection and verified account.
 
-Visitor entry and the approved catalogue work without a Firebase connection. Cloud drafts, shared models and PDF generation require a verified account. Copy `.env.example` to `.env.local` and follow [the Firebase setup guide](docs/shared-lift-models.md) and [employee workspace guide](docs/employee-workspace.md). Use the public Firebase Web app configuration; never put service-account credentials or private keys in frontend environment variables.
+```sh
+npm run build
+npm run preview
+```
+
+The production build is written to `dist/`. Vite embeds the public Firebase configuration at build time, so environment changes require a new build.
 
 ## npm scripts
 
 | Command | Purpose |
 | --- | --- |
-| `npm run dev` | Start the Vite development server. |
-| `npm run build` | Produce a production build in `dist/`. |
+| `npm run dev` | Start the development server. |
+| `npm run build` | Build the application for production. |
 | `npm run preview` | Serve the production build locally. |
-| `npm run lint` | Run ESLint across the project. |
-| `npm test` | Run the Node test suite. |
-| `npm run test:rules` | Start the local Firestore emulator and test access policies (Java 21+ required). |
-| `npm run test:emulators` | Run the complete suite with Firestore rules enabled, without skipped security tests. |
-| `npm run catalogue:build` | Convert the authoritative workbook into application JSON and write its validation report. |
-| `npm run catalogue:check` | Verify that the committed JSON catalogue still matches the source workbook and conversion rules. |
+| `npm run lint` | Run ESLint. |
+| `npm test` | Run application tests; the rules suite is explicitly skipped when no emulator is configured. |
+| `npm run test:rules` | Start the isolated Firestore emulator and run security-rule tests, or use an existing emulator. Requires Java 21+. |
+| `npm run test:emulators` | Run the complete test suite with Firestore security tests enabled. Requires Java 21+. |
+| `npm run catalogue:build` | Rebuild catalogue JSON and its validation report from the authoritative workbook. |
+| `npm run catalogue:check` | Check that catalogue JSON still matches the workbook and conversion rules. |
+
+During development, run focused tests for the change. Before application releases, run the complete tests, catalogue check, lint and build. The emulator runner targets the isolated `demo-quoteflow` project.
 
 ## Project structure
 
 ```text
 src/
-  app/                  Employee workflow, steps, and shared UI controls
-  data/catalogue/       Generated lift catalogue JSON
-  models/quotation/     Schema, migrations, validation, and document resolver
-  pdf/                  Six-page PDF renderer and preview/download integration
-  services/             Firebase authentication, shared models, and private cloud draft access
-  templates/            Approved fixed document content and defaults
-scripts/                Excel-to-JSON conversion and validation
-data/source/            Authoritative lift-model workbook
-data/reports/           Generated catalogue validation report
-docs/                   Contract, data notes, and implementation audits
-public/assets/          Application branding assets
-tests/                  Resolver, migration, catalogue, and workflow tests
+  app/                  Workflow screens, controls and presentation helpers
+  data/catalogue/       Excel-derived catalogue JSON
+  models/               Quotation schema, migrations and workspace state
+  services/             Firebase account, shared-model and private-draft access
+  templates/            Approved Altis document content and defaults
+  pdf/                  Shared six-page renderer, preview and download
+data/source/            Authoritative catalogue workbook; private local inputs
+data/reports/           Catalogue validation results
+scripts/                Conversion, emulator and PDF verification tooling
+tests/                  Domain, persistence, security and rendering tests
+docs/                   Technical contracts, setup guides and screenshots
+public/assets/          Application and document branding
 ```
 
-## Catalogue architecture
+## Security and document handling
 
-The lift catalogue is deliberately separated from quotation data:
+- Firestore rules enforce verified-account access, private draft ownership, revision checks and validation of shared-model additions.
+- **The current authorization policy accepts every verified Firebase account.** It does not use employee approval lists or company-domain restrictions.
+- Quotation drafts are private to their owner. Sharing a lift model does not share the author's quotations.
+- Firebase Web configuration is public client configuration. Service-account keys, Admin credentials and other secrets must never be placed in `VITE_*` variables or frontend code.
+- Local recovery uses browser storage, not an encrypted vault. Signing out hides employee quotations in the interface while retaining account-scoped recovery data on that device.
+- PDFs are generated client-side. Sign-in and export-readiness checks govern the application workflow; there is no server-issued signing or document-approval service.
+- Customer workbooks, reference quotations and local environment files must stay out of Git and `public/`. Files in `public/` are served with the application.
 
-```text
-lift-models.xlsx
-  -> scripts/convert-lift-catalogue.mjs
-  -> src/data/catalogue/liftCatalogue.json
-  -> selected catalogue configuration
-  -> quotation-level overrides
-  -> resolveQuotationDocument()
-  -> review and PDF
-```
+### Publication review
 
-The converter preserves source record identifiers and row numbers so a selected configuration remains traceable to the workbook. It also generates a validation report for duplicate, invalid, missing, and ambiguous source fields. The application never writes back to the catalogue; employee changes are saved only as quotation-level overrides.
+Company-specific materials are already tracked in this repository. Their presence does not establish permission to redistribute them. Obtain the applicable rights holders' approval; if publication is not authorized, remove or redact the material from the public repository and assess its Git history.
 
-Known ambiguous workbook fields remain explicit rather than being guessed. In particular, QuoteFlow does not infer passenger capacity or maximum load from unrelated model properties.
+| Material to review | Why it needs review |
+| --- | --- |
+| `data/source/lift-models.xlsx` | Original Altis catalogue and technical source information. |
+| `src/data/catalogue/liftCatalogue.json`, `data/reports/liftCatalogue.validation.json` | Catalogue-derived specifications, source cells and data-quality details. |
+| `public/assets/` | Altis logos, branding and document watermarks. |
+| `src/templates/altisQuotationTemplate.js` | Company-specific quotation, commercial and contractual wording and contact information. |
+| Reference-derived audits and mapping reports under `docs/` | Internal business/source analysis that may require redaction or distribution approval. |
 
-## PDF preview and export
+The private `customerdetails.xlsx` and `liftsquery.xlsx` workbooks, customer reference PDF and `.env.local` are ignored and untracked in the reviewed checkout. Keep them private. Ignore rules do not remove files previously committed.
 
-QuoteFlow renders the approved six-page Altis quotation from the resolved document data. Fixed branding, contract wording, warranty, and obligations live in the central template; variable values come from the selected configuration and the active quotation.
+## Current limitations and future work
 
-Verified employees can preview incomplete drafts for layout review. Missing values are intentionally left blank, never fabricated. Visitors can review form values and are prompted to sign in before PDF rendering. Download requires both an authorized employee session and complete customer, lift, commercial, and material values. Generated filenames are based on the composed quotation reference.
+- One lift configuration per quotation.
+- Private per-user quotation storage; no collaborative editing or cross-employee quotation sharing.
+- Local guest drafts require the same browser until imported into a verified account.
+- Cloud recovery across devices requires a connection; pending local changes are preserved when cloud saving fails.
+- Catalogue updates use a deliberate Excel-to-JSON conversion, without live Excel synchronization.
+- Passenger capacity and maximum load remain employee-selected or entered; they are not inferred from model names or historical frequency.
+- No automatic quotation numbering, digital signatures or historical customer imports.
+- The existing total-floor / `G +` travel presentation has a [documented mapping question](docs/travel-height-mapping-findings.md); its semantics have not been silently changed.
 
-## Current limitations
+Future work includes approved catalogue enrichment, further physical-device accessibility checks and release automation. These are prospective improvements, not current capabilities.
 
-- Quotations support one lift configuration at a time.
-- Guest drafts stay on the current browser. Verified employee quotations sync privately to the same account across devices; this does not provide collaborative editing or cross-employee access.
-- The catalogue is refreshed by the local conversion script, not live Excel synchronization.
-- Passenger capacity and maximum load remain explicit quotation inputs until a reliable source mapping is approved.
-- Some source workbook columns are intentionally unresolved and are surfaced as review information rather than automatically mapped.
-- Digital signatures, automatic sequential reference numbering, and collaborative quotation editing are not included.
+## Developer documentation
 
-## Planned improvements
+- [Quotation contract](docs/quotation-contract.md) — schema, defaults, resolution and PDF ownership.
+- [Employee workspace](docs/employee-workspace.md) — guest import, autosave, recovery and conflicts.
+- [Firebase shared-model setup](docs/shared-lift-models.md) — account configuration, storage and access rules.
+- [Catalogue source notes](docs/catalogue-data-notes.md) — conversion provenance and unresolved mappings.
+- [Deployment and verification record](docs/release-readiness-2026-11-03.md) — dated release evidence and known verification limits.
+- [Contributor guidance](AGENTS.md) — change boundaries and checks.
 
-Future work may include a more detailed approved lift-model source, richer catalogue mappings, broader accessibility and touch-device review, and automated release checks. These changes should preserve the existing resolver contract and the approved document content.
+Earlier design and source audits describe the application at the time they were written; use the current quotation contract for implementation work.
 
-See [release readiness](docs/release-readiness-2026-11-03.md) for verified checks and outstanding deployment requirements.
+## Copyright, Trademarks & Proprietary Materials
 
-## Business context and document handling
+QuoteFlow was developed for the Altis Elevators quotation workflow. Altis Elevators' branding, names, logos, approved quotation templates, technical specifications and company-specific data remain proprietary to their respective rights holders.
 
-QuoteFlow is being developed for the Altis Elevators quotation workflow. Altis-specific business wording and reference materials are used only as the intended document context.
+Public repository visibility does **not** grant permission to commercially reuse those proprietary materials. Obtain permission from the applicable rights holders before using them in another product, service or commercial document.
 
-Customer quotation PDFs are excluded from version control and must not be placed in `public/`, where Vite would deploy them as public assets. Before making this repository public, the organization should also explicitly confirm that publishing `data/source/lift-models.xlsx` and the generated catalogue is authorized: both are currently tracked business source data.
+The Altis name and branding identify the intended business context. This notice does not assert registered-trademark status or assign ownership of QuoteFlow's source code to Altis Elevators.
 
-## Contributing
-
-Read [AGENTS.md](AGENTS.md) and [the quotation contract](docs/quotation-contract.md) before changing quotation behavior. Keep catalogue provenance intact, preserve approved contractual text, and run the focused tests plus lint/build checks relevant to the change.
+No open-source license is currently included in this repository. This notice does not create a software license or grant additional rights; third-party dependencies remain subject to their own applicable licenses.
