@@ -4,13 +4,16 @@ import test from "node:test";
 import { createQuotation } from "../src/models/quotation/quotation.js";
 import { ALTIS_QUOTATION_TEMPLATE as template } from "../src/templates/altisQuotationTemplate.js";
 import { emptySharedModel, sharedModelPayload } from "../src/models/catalogue/sharedModels.js";
+import { entryOptionPayload } from "../src/models/catalogue/sharedEntryOptions.js";
+import { sharedEntryOptionsService } from "../src/services/sharedEntryOptions.js";
 
 const emulator = process.env.FIRESTORE_EMULATOR_HOST;
 test("Firestore rules: private employee drafts, verified access, revision checks and shared-model separation", { skip: !emulator }, async (t) => {
   const [host, port] = emulator.split(":");
   assert.ok(["localhost", "127.0.0.1"].includes(host) && Number(port) > 0, "Rules tests must use a local emulator, never a production endpoint");
   const { initializeTestEnvironment, assertFails, assertSucceeds } = await import("@firebase/rules-unit-testing");
-  const { doc, collection, setDoc, getDoc, getDocs, deleteDoc, serverTimestamp } = await import("firebase/firestore");
+  const firestore = await import("firebase/firestore");
+  const { doc, collection, setDoc, getDoc, getDocs, deleteDoc, serverTimestamp } = firestore;
   const env = await initializeTestEnvironment({ projectId: "demo-quoteflow", firestore: { host, port: Number(port), rules: await readFile(new URL("../firestore.rules", import.meta.url), "utf8") } });
   t.after(() => env.cleanup()); await env.clearFirestore();
   const alice = env.authenticatedContext("alice", { email_verified: true, email: "alice@example.test" }).firestore();
@@ -62,6 +65,41 @@ test("Firestore rules: private employee drafts, verified access, revision checks
     await assertFails(getDoc(doc(pending, `liftModels/${modelId}`)));
     await assertFails(setDoc(doc(alice, `liftModels/${modelId}`), model));
     await assertFails(deleteDoc(doc(alice, `liftModels/${modelId}`)));
+  });
+  await t.test("verified employees share capacity and material options without exposing private drafts", async () => {
+    for (const input of [{ kind: "capacity", passengerCount: "7", maximumLoadKg: "475.5" }, { kind: "material", materialKey: "rope", specification: "Synthetic approved rope" }]) {
+      const optionId = uuid();
+      const option = { ...entryOptionPayload(input, optionId), created_by: "alice", created_at: serverTimestamp() };
+      await assertSucceeds(setDoc(doc(alice, `quotationOptions/${optionId}`), option));
+      await assertSucceeds(getDoc(doc(bob, `quotationOptions/${optionId}`)));
+      for (const db of [anon, pending]) {
+        await assertFails(getDoc(doc(db, `quotationOptions/${optionId}`)));
+        await assertFails(getDocs(collection(db, "quotationOptions")));
+      }
+      await assertFails(setDoc(doc(alice, `quotationOptions/${optionId}`), option));
+      await assertFails(deleteDoc(doc(bob, `quotationOptions/${optionId}`)));
+    }
+  });
+  await t.test("team option service transactions retry safely and restore across employee clients", async () => {
+    const client = (db, uid) => sharedEntryOptionsService({ db, firestore, userId: () => uid, isVerified: () => true });
+    const optionId = uuid();
+    const input = { kind: "material", materialKey: "controlPanel", specification: "Synthetic shared controller" };
+    const record = await client(alice, "alice").add(input, optionId);
+    assert.deepEqual(await client(alice, "alice").add(input, optionId), record);
+    assert.ok((await client(bob, "bob").list()).some((entry) => entry.id === optionId));
+    await assert.rejects(client(alice, "alice").add({ ...input, specification: "Different controller" }, optionId), { code: "options/id-conflict" });
+  });
+  await t.test("team option identity, author, numeric values and exact fields are enforced", async () => {
+    const optionId = uuid();
+    const option = { ...entryOptionPayload({ kind: "capacity", passengerCount: "7", maximumLoadKg: "475.5" }, optionId), created_by: "alice", created_at: serverTimestamp() };
+    for (const change of [{ id: uuid() }, { created_by: "bob" }, { created_at: null }, { passengerCount: 0 }, { passengerCount: 1.5 }, { passengerCount: "7" }, { maximumLoadKg: "0.00" }, { maximumLoadKg: "-1" }, { maximumLoadKg: "Infinity" }, { quotation: {} }, { kind: "unknown" }]) await assertFails(setDoc(doc(alice, `quotationOptions/${optionId}`), { ...option, ...change }));
+    await assertFails(setDoc(doc(pending, `quotationOptions/${optionId}`), { ...option, created_by: "pending" }));
+    await assertFails(setDoc(doc(anon, `quotationOptions/${optionId}`), option));
+  });
+  await t.test("material additions cannot create arbitrary rows or contain empty/oversized specifications", async () => {
+    const optionId = uuid();
+    const option = { ...entryOptionPayload({ kind: "material", materialKey: "cabin", specification: "Synthetic finish" }, optionId), created_by: "alice", created_at: serverTimestamp() };
+    for (const change of [{ materialKey: "customer" }, { specification: "   " }, { specification: "x".repeat(181) }, { passengerCount: 6 }]) await assertFails(setDoc(doc(alice, `quotationOptions/${optionId}`), { ...option, ...change }));
   });
   await t.test("a newly verified account needs no approval or domain allowlist", async () => {
     const newcomer = env.authenticatedContext("new-employee", { email_verified: true, email: "personal@example.test" }).firestore();

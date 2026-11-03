@@ -30,6 +30,33 @@ service cloud.firestore {
         && text(request.resource.data.rope, 180);
       allow update, delete: if false;
     }
+    match /quotationOptions/{optionId} {
+      allow read: if verifiedUser();
+      allow create: if verifiedUser()
+        && optionId.matches('^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$')
+        && request.resource.data.keys().hasAll(['id', 'kind', 'created_by', 'created_at'])
+        && request.resource.data.id == optionId
+        && request.resource.data.created_by == request.auth.uid
+        && request.resource.data.created_at == request.time
+        && (capacityOption(request.resource.data) || materialOption(request.resource.data));
+      allow update, delete: if false;
+    }
+    function capacityOption(data) {
+      return data.kind == 'capacity'
+        && data.keys().hasAll(['passengerCount', 'maximumLoadKg'])
+        && data.keys().hasOnly(['id', 'kind', 'passengerCount', 'maximumLoadKg', 'created_by', 'created_at'])
+        && data.passengerCount is int && data.passengerCount > 0 && data.passengerCount <= 9007199254740991
+        && text(data.maximumLoadKg, 32)
+        && data.maximumLoadKg.matches('^[0-9]+([.][0-9]+)?$')
+        && !data.maximumLoadKg.matches('^0+([.]0+)?$');
+    }
+    function materialOption(data) {
+      return data.kind == 'material'
+        && data.keys().hasAll(['materialKey', 'specification'])
+        && data.keys().hasOnly(['id', 'kind', 'materialKey', 'specification', 'created_by', 'created_at'])
+        && data.materialKey in ['controlPanel', 'cabin', 'doors', 'flooring', 'rope', 'lopCop', 'lightsBlower', 'indications', 'security', 'motors', 'guideRails', 'autoRescueDevice']
+        && requiredText(data.specification, 180);
+    }
     function quotationShape(q) {
       return q is map && q.schemaVersion == 4
         && q.keys().hasAll(['schemaVersion', 'reference', 'metadata', 'customer', 'lift', 'materials', 'commercial', 'document'])

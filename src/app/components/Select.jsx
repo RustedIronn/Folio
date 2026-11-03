@@ -8,7 +8,7 @@ function Chevron() {
 }
 
 /** Local wrapper for short, predefined choices. */
-export default function Select({ id, value, options, onChange, placeholder = "Choose an option", disabled = false, className = "", "aria-label": ariaLabel, "aria-describedby": ariaDescribedBy, "aria-invalid": ariaInvalid, "aria-required": ariaRequired }) {
+export default function Select({ id, value, options, onChange, placeholder = "Choose an option", disabled = false, className = "", positionerClassName = "", "aria-label": ariaLabel, "aria-describedby": ariaDescribedBy, "aria-invalid": ariaInvalid, "aria-required": ariaRequired }) {
   const items = options.map((option) => ({ value: option.value, label: option.label }));
 
   return <BaseSelect.Root value={value || null} onValueChange={(nextValue) => onChange(nextValue ?? "")} items={items} disabled={disabled}>
@@ -17,7 +17,7 @@ export default function Select({ id, value, options, onChange, placeholder = "Ch
       <BaseSelect.Icon className="select-chevron" aria-hidden="true"><ChevronDown size={17} strokeWidth={2} /></BaseSelect.Icon>
     </BaseSelect.Trigger>
     <BaseSelect.Portal>
-      <BaseSelect.Positioner className="select-positioner" sideOffset={8} collisionPadding={12} align="start">
+      <BaseSelect.Positioner className={`select-positioner ${positionerClassName}`.trim()} sideOffset={8} collisionPadding={12} align="start">
         <BaseSelect.Popup className="select-panel">
           <BaseSelect.List className="select-options">
             {options.map((option) => <BaseSelect.Item key={option.value} value={option.value} label={option.label} disabled={option.disabled} className="select-option">

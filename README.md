@@ -26,6 +26,7 @@ Employees can move directly between sections. Inputs are retained while navigati
 - **Firebase sign-in:** email/password registration, email verification and guest-to-account continuity without replacing existing saved quotations.
 - **Private cloud autosave:** per-user drafts, cross-device restoration, local recovery copies and explicit choices when saved versions conflict.
 - **Shared lift models:** verified users can add models to a separate shared library without changing the original Excel catalogue.
+- **Shared entry options:** verified users can save reusable passenger/load pairs and material specifications for the team. Applying an option customizes the current quotation; it does not create a catalogue standard or new PDF row.
 - **Two six-page PDF options:** Branded and Print-friendly, generated from the same quotation data used by Review.
 - **Responsive workflow:** desktop and mobile layouts, keyboard navigation, contextual editing links and visible save feedback.
 
@@ -91,6 +92,7 @@ Quotation state uses schema v4. Review and both PDF versions consume the same re
 | Visitor quotation | Local browser draft; imported as a separate draft after verified sign-in. |
 | Employee quotations | Private Firestore drafts owned by that account, with account-scoped local recovery copies. |
 | Employee-added lift models | Shared Firestore collection available to verified accounts; separate from private quotations and the 49-record catalogue. |
+| Employee-added capacity/material options | Append-only shared `quotationOptions` collection; values are copied into a quotation only when explicitly chosen. |
 
 Cloud conflicts preserve alternatives rather than silently overwriting a newer quotation. Shared models are append-only through the application.
 

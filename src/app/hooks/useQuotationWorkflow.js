@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import approvedCatalogue from "../../data/catalogue/liftCatalogue.json";
 import { quotationCatalogue } from "../../models/catalogue/sharedModels.js";
 import useSharedModels from "./useSharedModels.js";
+import useSharedEntryOptions from "./useSharedEntryOptions.js";
 import useEmployeeSession from "./useEmployeeSession.js";
 import useQuotationDrafts from "./useQuotationDrafts.js";
 import { quotationDocumentAccess } from "../../services/employeeAccess.js";
@@ -23,6 +24,7 @@ export function useQuotationWorkflow() {
   const drafts = useQuotationDrafts(employee);
   const { quotation, setQuotation } = drafts;
   const sharedModels = useSharedModels(employee);
+  const sharedEntryOptions = useSharedEntryOptions(employee);
   const catalogue = useMemo(() => quotationCatalogue(approvedCatalogue, sharedModels.records, quotation), [sharedModels.records, quotation]);
   const [pendingConfiguration, setPendingConfiguration] = useState(null);
   const [showReviewErrors, setShowReviewErrors] = useState(false);
@@ -103,7 +105,7 @@ export function useQuotationWorkflow() {
     window.setTimeout(() => focusWorkflowField(`technical-${key}`), 0);
   }
   return {
-    catalogue, employee, drafts, documentAccess, authIntent, setAuthIntent, completeSignIn, requestPreview, sharedModels, addSharedModel, template, quotation, setQuotation, resolved, exportReady, workflowProgress, overallProgress, currentStep, currentStepIndex, saveStatus,
+    catalogue, employee, drafts, documentAccess, authIntent, setAuthIntent, completeSignIn, requestPreview, sharedModels, addSharedModel, sharedEntryOptions, template, quotation, setQuotation, resolved, exportReady, workflowProgress, overallProgress, currentStep, currentStepIndex, saveStatus,
     pendingConfiguration, setPendingConfiguration, showReviewErrors, setShowReviewErrors, previewRequested, setPreviewRequested,
     errors, readinessGroups, update, updateProject, updatePayment, chooseConfiguration, confirmConfiguration, visitStep, continueStep, previousStep, resetDraft, jumpToIssue, openTechnicalField,
     reference: composeReference(quotation.reference, template), suggestedYear: suggestFinancialYear(quotation.metadata.date), stepFor: (id) => workflowProgress.find((step) => step.id === id),

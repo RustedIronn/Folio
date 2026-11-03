@@ -38,3 +38,11 @@
   .add-model-actions { padding: 14px 16px calc(14px + env(safe-area-inset-bottom)); }
   .add-model-actions .button { min-height: 44px; }
 }
+.materials-heading-actions { display:flex; flex-wrap:wrap; align-items:center; justify-content:flex-end; gap:12px; }
+.team-options-toolbar { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px 16px; color:var(--muted); font-size:12px; }
+.team-options-toolbar > span { flex:1 1 200px; line-height:1.5; }
+.team-options-warning { color:var(--muted); font-size:12px; line-height:1.5; }
+.entry-option-dialog { max-width:560px; }
+@media(max-width:580px) { .materials-hero { flex-wrap:wrap; } .materials-heading-actions { width:100%; justify-content:space-between; } .configuration-heading-row { flex-wrap:wrap; gap:8px; } .configuration-heading-row > .button { margin-bottom:12px; } }
+
+.select-positioner.entry-option-positioner { z-index:202; }
