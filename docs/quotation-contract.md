@@ -4,10 +4,12 @@ This is the concise implementation contract for routine QuoteFlow work. It is de
 
 ## Ownership and version
 
-- Schema: **v4**, persisted as `quoteflow:draft:v4`. `src/models/quotation/quotation.js` owns creation, migration, validation, resolution, formatting, and override helpers.
+- Schema: **v4**. `src/models/quotation/quotation.js` owns creation, legacy draft migrations, validation, resolution, formatting, and override helpers. `src/models/quotation/workspace.js` owns the version-1 local/cloud workspace envelope, account isolation, guest import, autosave and conflict recovery. Legacy `quoteflow:draft:v4`/v1–v3 keys remain importable.
 - Template: `src/templates/altisQuotationTemplate.js` owns fixed company, legal, material-default, commercial-default, and signature text. Preserve approved wording exactly.
 - Catalogue: `src/data/catalogue/liftCatalogue.json` contains 49 Excel-derived records. `sourceRecordId` and `sourceRow` are provenance and must remain traceable to `data/source/lift-models.xlsx`.
+- Shared additions: Firebase Authentication and Firestore store employee-entered models separately. They use `shared:<uuid>` identifiers, `origin: "shared"`, and a null Excel row; never assign fabricated workbook IDs. Verified email accounts can read/add models with no domain restriction or approval list. The approved JSON is unchanged. Firestore rules validate creates and prohibit updates/deletes.
 - One resolver, `resolveQuotationDocument(quotation, catalogue, template)`, produces the document used by both review and PDF. Pages must not resolve their own values.
+- Visitor entry/review stays public. All verified Firebase accounts are authorized employees (owner-confirmed; no allowlist). Cloud writes, shared models and PDF rendering require that session. Final download additionally requires the existing export readiness checks.
 
 ## Quotation shape
 
@@ -22,6 +24,10 @@ This is the concise implementation contract for routine QuoteFlow work. It is de
 | Acceptance | `document.acceptanceName`, `document.acceptanceDate`; printable but optional |
 
 `lift.project.passengerCount` and `maximumLoadKg` compose the capacity string. Legacy `project.capacity` is only a fallback for migrated drafts. `lift.installation` owns structured/custom floor and dimension entry and writes the printable project descriptions.
+
+An optional `lift.configurationSnapshot` preserves the selected shared model in v4 drafts. Existing v4 drafts need no migration. `selectedConfiguration()` resolves a matching, validated shared snapshot before the current catalogue; selecting an Excel record removes it. The snapshot stays in its quotation even offline. Other shared records require sign-in. The Firebase migration retains the same IDs and snapshot format; provider session tokens are not migrated.
+
+Guest data is local (`quoteflow:guest-workspace:v1`). Employee caches are namespaced by UID (`quoteflow:employee-workspace:v1:<uid>`); logout restores the separate visitor workspace and hides employee data. Private cloud drafts live at `users/{uid}/quotationDrafts/{uuid}`, separate from `liftModels`. Cloud documents wrap the unchanged v4 quotation with owner UID, revision, mutation ID and server timestamps. Guest import creates a separate draft; existing employee drafts are retained. Revision conflicts never overwrite newer data: save a copy, or restore cloud data while keeping a local backup. See [employee-workspace.md](employee-workspace.md).
 
 ## Resolution and precedence
 
@@ -42,7 +48,7 @@ Altis convention (owner-confirmed): the PDF's existing “Travel Height” field
 ## Required for final export
 
 - Reference number, office code, financial year, date; customer address, recipient name, and project location.
-- Selected configuration with a detailed Excel description; positive integer quantity.
+- Selected configuration with a detailed catalogue or employee-entered description; positive integer quantity.
 - Passenger count and maximum load, or an existing migrated capacity description; travel height, floor description, landing description, and cabin cutting.
 - Non-negative quotation price; tax, packing/forwarding, delivery, transport/octroi, guarantee; all three payment percentages totaling 100.
 - Every non-optional material value. Auto Rescue Device is intentionally optional.

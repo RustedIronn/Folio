@@ -1,0 +1,11 @@
+# Local-only source documents and outputs must not be uploaded by the CLI.
+/data/
+/docs/references/
+/tmp/
+/output/
+/.firebase/
+/.git/
+/node_modules/
+/dist/
+.env
+.env.*

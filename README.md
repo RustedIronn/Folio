@@ -17,25 +17,28 @@ The review screen and the PDF renderer use the same resolved-document object. A 
 ## Implemented features
 
 - Guided five-step employee workflow: Customer, Lift & installation, Materials, Commercial terms, and Review & PDF.
-- Local draft persistence with versioned migrations for earlier drafts.
+- Public visitor entry with local guest drafts; verified employee sign-in preserves guest input and imports it without overwriting saved quotations.
+- Private per-user Firestore draft autosave, cross-device restoration, account-isolated local recovery, and explicit conflict handling.
 - Searchable selection from 49 Excel-derived lift configurations, retaining each source record ID and workbook row.
+- Shared, employee-added lift models through Firebase Authentication and Cloud Firestore, with personal-email registration, email verification, and sign-in. Shared models stay separate from the approved Excel catalogue.
 - Catalogue autofill with quotation-level technical and material overrides, restoration to the catalogue/template value, and confirmation before configuration changes discard dependent values.
 - Structured reference-number composition, Indian financial-year suggestion, floor/landing descriptions, dimensions, capacity inputs, and INR amount-in-words formatting.
 - Approved commercial defaults that remain quotation-specific and editable.
 - A unified resolver that supplies consistent values across the review screen and all six PDF pages.
-- Draft PDF preview and gated final export using `@react-pdf/renderer`.
+- Employee-only draft PDF preview and final export using `@react-pdf/renderer`, with final download also gated by quotation completeness.
 - Responsive, keyboard-accessible workspace with Altis green and gold visual styling.
 
 ## Technology
 
 - React 19 and Vite
 - `@react-pdf/renderer` for client-side PDF preview and download
+- Base UI, Lucide React, and the modular Firebase Web SDK for accessible controls, icons, and shared model storage/authentication
 - SheetJS (`xlsx`) for deterministic catalogue conversion and validation
 - Native Node test runner and ESLint
 
 ## Local development
 
-Use a recent Node.js LTS release and npm.
+Use Node.js 22.12 or newer (Node 24 LTS is also supported) and npm.
 
 ```sh
 git clone <repository-url>
@@ -46,6 +49,8 @@ npm run dev
 
 Vite prints the local development address when it starts. Use `npm run build` to create a production bundle and `npm run preview` to serve that bundle locally.
 
+Visitor entry and the approved catalogue work without a Firebase connection. Cloud drafts, shared models and PDF generation require a verified account. Copy `.env.example` to `.env.local` and follow [the Firebase setup guide](docs/shared-lift-models.md) and [employee workspace guide](docs/employee-workspace.md). Use the public Firebase Web app configuration; never put service-account credentials or private keys in frontend environment variables.
+
 ## npm scripts
 
 | Command | Purpose |
@@ -55,6 +60,8 @@ Vite prints the local development address when it starts. Use `npm run build` to
 | `npm run preview` | Serve the production build locally. |
 | `npm run lint` | Run ESLint across the project. |
 | `npm test` | Run the Node test suite. |
+| `npm run test:rules` | Start the local Firestore emulator and test access policies (Java 21+ required). |
+| `npm run test:emulators` | Run the complete suite with Firestore rules enabled, without skipped security tests. |
 | `npm run catalogue:build` | Convert the authoritative workbook into application JSON and write its validation report. |
 | `npm run catalogue:check` | Verify that the committed JSON catalogue still matches the source workbook and conversion rules. |
 
@@ -66,6 +73,7 @@ src/
   data/catalogue/       Generated lift catalogue JSON
   models/quotation/     Schema, migrations, validation, and document resolver
   pdf/                  Six-page PDF renderer and preview/download integration
+  services/             Firebase authentication, shared models, and private cloud draft access
   templates/            Approved fixed document content and defaults
 scripts/                Excel-to-JSON conversion and validation
 data/source/            Authoritative lift-model workbook
@@ -97,20 +105,22 @@ Known ambiguous workbook fields remain explicit rather than being guessed. In pa
 
 QuoteFlow renders the approved six-page Altis quotation from the resolved document data. Fixed branding, contract wording, warranty, and obligations live in the central template; variable values come from the selected configuration and the active quotation.
 
-The application supports an incomplete draft preview for safe layout review. Missing values are intentionally left blank, never fabricated. Download is enabled only after the required customer, lift, commercial, and material values pass readiness validation. Generated filenames are based on the composed quotation reference.
+Verified employees can preview incomplete drafts for layout review. Missing values are intentionally left blank, never fabricated. Visitors can review form values and are prompted to sign in before PDF rendering. Download requires both an authorized employee session and complete customer, lift, commercial, and material values. Generated filenames are based on the composed quotation reference.
 
 ## Current limitations
 
 - Quotations support one lift configuration at a time.
-- Drafts are stored in the current browser's local storage; there is no shared backend or user authentication.
+- Guest drafts stay on the current browser. Verified employee quotations sync privately to the same account across devices; this does not provide collaborative editing or cross-employee access.
 - The catalogue is refreshed by the local conversion script, not live Excel synchronization.
 - Passenger capacity and maximum load remain explicit quotation inputs until a reliable source mapping is approved.
 - Some source workbook columns are intentionally unresolved and are surfaced as review information rather than automatically mapped.
-- Digital signatures, automatic sequential reference numbering, and multi-user workflows are not included.
+- Digital signatures, automatic sequential reference numbering, and collaborative quotation editing are not included.
 
 ## Planned improvements
 
-Future work may include a more detailed approved lift-model source, richer catalogue mappings, broader accessibility and touch-device review, shared persistence, and controlled deployment workflows. These changes should preserve the existing resolver contract and the approved document content.
+Future work may include a more detailed approved lift-model source, richer catalogue mappings, broader accessibility and touch-device review, and automated release checks. These changes should preserve the existing resolver contract and the approved document content.
+
+See [release readiness](docs/release-readiness-2026-11-03.md) for verified checks and outstanding deployment requirements.
 
 ## Business context and document handling
 
