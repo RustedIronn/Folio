@@ -8,6 +8,7 @@ export default function FormField({ id, label, error, hint, required = false, ch
   const control = isValidElement(children) ? cloneElement(children, {
     "aria-describedby": [children.props["aria-describedby"], describedBy].filter(Boolean).join(" ") || undefined,
     "aria-invalid": error ? true : children.props["aria-invalid"],
+    "aria-required": children.type === "div" ? children.props["aria-required"] : required || children.props["aria-required"],
   }) : children;
 
   return (

@@ -49,6 +49,8 @@ Altis convention (owner-confirmed): the PDF's existing “Travel Height” field
 
 ## Required for final export
 
+Entry UI labels, actionable prompts and focus visibility live in `src/app/workflowPresentation.js`; they do not change resolver validation or required-count arithmetic. Readiness includes approved prefilled standards. Blank optional materials are labelled optional. See [travel-height investigation](travel-height-mapping-findings.md) for the verified total-floors / `G +` presentation trace; its semantics remain unchanged.
+
 - Reference number, office code, financial year, date; customer address, recipient name, and project location.
 - Selected configuration with a detailed catalogue or employee-entered description; positive integer quantity.
 - Passenger count and maximum load, or an existing migrated capacity description; travel height, floor description, landing description, and cabin cutting.

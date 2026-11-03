@@ -8,11 +8,11 @@ function Chevron() {
 }
 
 /** Local wrapper for short, predefined choices. */
-export default function Select({ id, value, options, onChange, placeholder = "Choose an option", disabled = false, className = "", "aria-label": ariaLabel, "aria-describedby": ariaDescribedBy, "aria-invalid": ariaInvalid }) {
+export default function Select({ id, value, options, onChange, placeholder = "Choose an option", disabled = false, className = "", "aria-label": ariaLabel, "aria-describedby": ariaDescribedBy, "aria-invalid": ariaInvalid, "aria-required": ariaRequired }) {
   const items = options.map((option) => ({ value: option.value, label: option.label }));
 
   return <BaseSelect.Root value={value || null} onValueChange={(nextValue) => onChange(nextValue ?? "")} items={items} disabled={disabled}>
-    <BaseSelect.Trigger id={id} className={`select-trigger ${className}`.trim()} aria-label={ariaLabel} aria-describedby={ariaDescribedBy} aria-invalid={ariaInvalid}>
+    <BaseSelect.Trigger id={id} className={`select-trigger ${className}`.trim()} aria-label={ariaLabel} aria-describedby={ariaDescribedBy} aria-invalid={ariaInvalid} aria-required={ariaRequired}>
       <BaseSelect.Value placeholder={placeholder} />
       <BaseSelect.Icon className="select-chevron" aria-hidden="true"><ChevronDown size={17} strokeWidth={2} /></BaseSelect.Icon>
     </BaseSelect.Trigger>
@@ -35,7 +35,7 @@ export default function Select({ id, value, options, onChange, placeholder = "Ch
  * A controlled picker for approved catalogue records. Ranking remains outside
  * this component so `searchCatalogue()` stays the single matching authority.
  */
-export function Combobox({ id, value, options, onChange, query, onQueryChange, placeholder = "Search or choose", emptyMessage = "No matching options.", panelLabel = "Lift configurations", renderOption, selectedLabel, "aria-label": ariaLabel, "aria-describedby": ariaDescribedBy, "aria-invalid": ariaInvalid }) {
+export function Combobox({ id, value, options, onChange, query, onQueryChange, placeholder = "Search or choose", emptyMessage = "No matching options.", panelLabel = "Lift configurations", renderOption, selectedLabel, "aria-label": ariaLabel, "aria-describedby": ariaDescribedBy, "aria-invalid": ariaInvalid, "aria-required": ariaRequired }) {
   const [open, setOpen] = useState(false);
   const selected = options.find((option) => option.value === value);
   const displayValue = open ? query : selectedLabel ?? selected?.label ?? query;
@@ -68,7 +68,7 @@ export function Combobox({ id, value, options, onChange, query, onQueryChange, p
   >
     <div className="catalogue-combobox">
       <div className="combobox-input-shell">
-        <BaseCombobox.Input id={id} className="combobox-input" placeholder={placeholder} aria-label={ariaLabel} aria-describedby={ariaDescribedBy} aria-invalid={ariaInvalid} />
+        <BaseCombobox.Input id={id} className="combobox-input" placeholder={placeholder} aria-label={ariaLabel} aria-describedby={ariaDescribedBy} aria-invalid={ariaInvalid} aria-required={ariaRequired} />
         <Chevron />
       </div>
       <BaseCombobox.Portal>

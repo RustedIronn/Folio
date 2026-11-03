@@ -8,12 +8,14 @@ import { quotationDocumentAccess } from "../../services/employeeAccess.js";
 import { ALTIS_QUOTATION_TEMPLATE as template } from "../../templates/altisQuotationTemplate.js";
 import { applyConfiguration, composeReference, getConfigurationSwitchImpact, isQuotationExportReady, resolveQuotationDocument, suggestFinancialYear } from "../../models/quotation/quotation.js";
 import { getWorkflowProgress, overallCompletion, workflowSectionForPath, WORKFLOW_STEPS } from "../../models/quotation/workflow.js";
+import { focusWorkflowField, keepWorkflowFocusVisible, readinessMessage } from "../workflowPresentation.js";
 
 export const FIELD_TARGETS = {
   "reference.quotationNumber": "reference-number", "reference.officeCode": "reference-office", "reference.financialYear": "reference-financial-year", "metadata.date": "quotation-date",
   "customer.address": "customer-address", "customer.attentionName": "recipient-name", "customer.projectLocation": "project-location",
   "lift.catalogueId": "configuration", "lift.quantityType": "configuration", "lift.quantity": "quantity", "lift.project.capacity": "passenger-count", "lift.project.travelHeight": "project-travel", "lift.project.floors": "upper-floors", "lift.project.landings": "upper-floors", "lift.project.cabinCutting": "project-cabin-cutting",
   "commercial.priceAmount": "price", "commercial.taxDescription": "tax", "commercial.packingForwarding": "packing", "commercial.delivery": "delivery", "commercial.transportOctroi": "transport", "commercial.guarantee": "guarantee",
+  "commercial.payment": "payment-advance", "commercial.payment.advance": "payment-advance", "commercial.payment.dispatch": "payment-dispatch", "commercial.payment.completion": "payment-completion",
 };
 
 export function useQuotationWorkflow() {
@@ -36,13 +38,22 @@ export function useQuotationWorkflow() {
   const workflowProgress = useMemo(() => getWorkflowProgress(resolved, visitedSteps, attemptedSteps, currentStep).map((step) => step.id === "review" && step.state === "ready" && !documentAccess.canPreview ? { ...step, state: "available" } : step), [resolved, visitedSteps, attemptedSteps, currentStep, documentAccess.canPreview]);
   const overallProgress = useMemo(() => overallCompletion(workflowProgress), [workflowProgress]);
   const currentStepIndex = WORKFLOW_STEPS.findIndex((step) => step.id === currentStep);
-  const errors = (path) => showReviewErrors || attemptedSteps.has(workflowSectionForPath(path)) ? resolved.missing.filter((entry) => entry.path === path).map((entry) => entry.label).join(" ") : "";
+  const errors = (path) => showReviewErrors || attemptedSteps.has(workflowSectionForPath(path)) ? resolved.missing.filter((entry) => entry.path === path).map(readinessMessage).join(" ") : "";
   const readinessGroups = useMemo(() => [
     ["Customer & reference", resolved.missing.filter((entry) => /^(reference|metadata|customer)\./.test(entry.path))],
     ["Lift & installation", resolved.missing.filter((entry) => /^lift\./.test(entry.path))],
     ["Materials", resolved.missing.filter((entry) => /^materials\./.test(entry.path))],
     ["Commercial terms", resolved.missing.filter((entry) => /^commercial\./.test(entry.path))],
   ].filter(([, entries]) => entries.length), [resolved.missing]);
+
+  useEffect(() => {
+    let frame;
+    const reveal = () => { window.cancelAnimationFrame(frame); frame = window.requestAnimationFrame(keepWorkflowFocusVisible); };
+    document.addEventListener("focusin", reveal);
+    window.visualViewport?.addEventListener("resize", reveal);
+    window.addEventListener("resize", reveal);
+    return () => { window.cancelAnimationFrame(frame); document.removeEventListener("focusin", reveal); window.visualViewport?.removeEventListener("resize", reveal); window.removeEventListener("resize", reveal); };
+  }, []);
 
   useEffect(() => {
     if (!employee.authorized) {
@@ -80,14 +91,21 @@ export function useQuotationWorkflow() {
   function requestPreview() { if (documentAccess.canPreview) setPreviewRequested(true); else setAuthIntent("pdf"); }
   function completeSignIn() { if (!employee.authorized) return; setAuthIntent(null); if (authIntent === "pdf") setPreviewRequested(true); }
   function jumpToIssue(entry) {
+    const material = entry.path.startsWith("materials.") && template.materials.find((item) => item.key === entry.path.slice(10));
+    if (material?.source === "technical") { openTechnicalField(material.technicalKey); return; }
     const step = workflowSectionForPath(entry.path);
     visitStep(step, true);
-    window.setTimeout(() => { const target = document.getElementById(FIELD_TARGETS[entry.path] || step); target?.focus?.(); target?.scrollIntoView({ behavior: "smooth", block: "center" }); }, 0);
+    const target = entry.path === "lift.project.floors" && quotation.lift.installation.floorMode === "custom" ? "custom-floors" : entry.path === "lift.project.landings" && quotation.lift.installation.floorMode === "custom" ? "custom-landings" : FIELD_TARGETS[entry.path] || step;
+    window.setTimeout(() => focusWorkflowField(target), 0);
+  }
+  function openTechnicalField(key) {
+    visitStep("installation");
+    window.setTimeout(() => focusWorkflowField(`technical-${key}`), 0);
   }
   return {
     catalogue, employee, drafts, documentAccess, authIntent, setAuthIntent, completeSignIn, requestPreview, sharedModels, addSharedModel, template, quotation, setQuotation, resolved, exportReady, workflowProgress, overallProgress, currentStep, currentStepIndex, saveStatus,
     pendingConfiguration, setPendingConfiguration, showReviewErrors, setShowReviewErrors, previewRequested, setPreviewRequested,
-    errors, readinessGroups, update, updateProject, updatePayment, chooseConfiguration, confirmConfiguration, visitStep, continueStep, previousStep, resetDraft, jumpToIssue,
+    errors, readinessGroups, update, updateProject, updatePayment, chooseConfiguration, confirmConfiguration, visitStep, continueStep, previousStep, resetDraft, jumpToIssue, openTechnicalField,
     reference: composeReference(quotation.reference, template), suggestedYear: suggestFinancialYear(quotation.metadata.date), stepFor: (id) => workflowProgress.find((step) => step.id === id),
     pdfFileName: (resolved.pages.cover.reference || "Altis-Quotation").replace(/[^a-z0-9._-]+/gi, "-") + ".pdf",
   };
