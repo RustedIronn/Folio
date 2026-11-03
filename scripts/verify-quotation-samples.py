@@ -28,9 +28,8 @@ for filename, expected in manifest.items():
             assert normalize(value) in normalized, (filename, index + 1, 'missing text', value)
         assert 'undefined' not in text and 'null' not in text
         if printable:
-            assert 'Executive Signature:' not in text and 'Customer Signature:' not in text
             assert 'ISO 9001' not in text
-        elif index > 0:
+        if index > 0:
             assert 'Executive Signature:' in text and 'Customer Signature:' in text
         if index == 2 and expected[index][2]:
             assert any(normalize(expected[index][2]) in normalize(value) and 'Times-Bold' in font for value, font in runs), (filename, 'price amount font')

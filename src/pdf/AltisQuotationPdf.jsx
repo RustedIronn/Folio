@@ -49,7 +49,7 @@ function PdfPage({ children, page, cover = false, branding, assets, printable })
     {cover && !printable && <View style={s.sidebar} />}
     {branding && <Image src={assets.watermark} style={s.watermark} />}
     {cover && !printable && <>{branding && <Image src={assets.lockup} style={s.brandLockup} />}<Text style={s.iso}>{page.company.isoStatement}</Text></>}
-    {children}{!printable && (cover ? <ContactFooter contacts={page.company.contacts} /> : <Footer footer={page.footer} />)}
+    {children}{cover ? !printable && <ContactFooter contacts={page.company.contacts} /> : <Footer footer={page.footer} />}
   </Page>;
 }
 function CoverPage({ page, ...props }) {

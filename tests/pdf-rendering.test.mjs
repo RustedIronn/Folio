@@ -43,7 +43,7 @@ for (const [name, quotation] of Object.entries(sampleCases())) {
     assert.equal(documentData.pages.materials.rows.length, 12);
     assert.equal(JSON.stringify(quotation), original);
   });
-  test(`${name} print-friendly quotation keeps six pages and body text without branding or footers`, async () => {
+  test(`${name} print-friendly quotation keeps six pages, body text and signature footers without branding`, async () => {
     const original = JSON.stringify(quotation);
     const { buffer, layout, documentData } = await renderQuotation(quotation, { variant: "printable" });
     assert.equal(layout.children.length, 6);
@@ -52,8 +52,12 @@ for (const [name, quotation] of Object.entries(sampleCases())) {
     const collect = (node) => (node.type === "TEXT_INSTANCE" ? node.value : "") + (node.children ?? []).map(collect).join("");
     const text = collect(layout);
     assert.ok(!text.includes(documentData.pages.cover.company.isoStatement));
-    assert.ok(!text.includes(documentData.pages.installation.footer.executive));
-    assert.ok(!text.includes(documentData.pages.installation.footer.customer));
+    for (const page of layout.children.slice(1)) {
+      const pageText = collect(page);
+      assert.ok(pageText.includes(documentData.pages.installation.footer.executive));
+      assert.ok(pageText.includes(documentData.pages.installation.footer.customer));
+      assert.ok(pageText.includes(`Date: ${displayDate(quotation.metadata.date)}`));
+    }
     for (const value of [documentData.pages.cover.reference, documentData.pages.installation.quantityAndType, ...documentData.pages.warranty.sections.flat(), ...documentData.pages.materials.rows.map((row) => row.value), ...documentData.pages.obligations.ours, ...documentData.pages.obligations.customer]) assert.ok(text.includes(value));
     assert.equal(JSON.stringify(quotation), original);
   });
