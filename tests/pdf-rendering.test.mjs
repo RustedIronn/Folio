@@ -23,12 +23,12 @@ test("PDF travel prefix preserves missing values and existing custom wording", (
 });
 
 test("PDF dimensions label axes without changing values, units or custom descriptions", () => {
-  assert.equal(displayDimensions("1800 × 1650 mm", ["W", "D"]), "1800 (W) × 1650 (D) mm");
-  assert.equal(displayDimensions("1100 x 1400 x 2100 mm", ["W", "D", "H"]), "1100 (W) × 1400 (D) × 2100 (H) mm");
-  assert.equal(displayDimensions("1100 x 1400 mm", ["W", "D", "H"]), "1100 (W) × 1400 (D) mm");
-  assert.equal(displayDimensions("1800.5 x 1650", ["W", "D"]), "1800.5 (W) × 1650 (D)");
+  assert.equal(displayDimensions("1800 × 1650 mm", ["W", "D"]), "W 1800 × D 1650 mm");
+  assert.equal(displayDimensions("1100 x 1400 x 2100 mm", ["W", "D", "H"]), "W 1100 × D 1400 × H 2100 mm");
+  assert.equal(displayDimensions("1100 x 1400 mm", ["W", "D", "H"]), "W 1100 × D 1400 mm");
+  assert.equal(displayDimensions("1800.5 x 1650", ["W", "D"]), "W 1800.5 × D 1650");
   for (const value of ["", null, undefined]) assert.equal(displayDimensions(value, ["W", "D"]), "");
-  for (const value of ["1800 (W) × 1650 (D) mm", "As per site", "1800 x", "180 x 165 cm", "1800 x 1650 x 2100 mm"]) assert.equal(displayDimensions(value, ["W", "D"]), value);
+  for (const value of ["W 1800 × D 1650 mm", "1800 (W) × 1650 (D) mm", "As per site", "1800 x", "180 x 165 cm", "1800 x 1650 x 2100 mm"]) assert.equal(displayDimensions(value, ["W", "D"]), value);
 });
 
 for (const [name, quotation] of Object.entries(sampleCases())) {

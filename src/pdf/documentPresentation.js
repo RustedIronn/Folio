@@ -26,7 +26,7 @@ export function displayDimensions(value, axes) {
   if (!match) return dimensions;
   const parts = match.slice(1, 4).filter((part) => part !== undefined);
   if (parts.length > axes.length) return dimensions;
-  return parts.map((part, index) => `${part} (${axes[index]})`).join(" × ") + (match[4] ? " mm" : "");
+  return parts.map((part, index) => `${axes[index]} ${part}`).join(" × ") + (match[4] ? " mm" : "");
 }
 
 // PDF generation must fail explicitly rather than return clipped printable content.

@@ -25,7 +25,7 @@ This is the concise implementation contract for routine QuoteFlow work. It is de
 
 `lift.project.passengerCount` and `maximumLoadKg` compose the capacity string. Legacy `project.capacity` is only a fallback for migrated drafts. `lift.installation` owns structured/custom floor and dimension entry and writes the printable project descriptions.
 
-PDF presentation labels plain shaft dimensions with `(W)` / `(D)`, and car dimensions with `(W)` / `(D)` / `(H)` when height is present. Values and recorded units are retained; blank, incomplete, already-labelled and descriptive custom text is not fabricated or relabelled. The website price input and amount feedback use the interface sans-serif font; PDF price typography remains the approved Times-Bold.
+PDF presentation prefixes plain shaft dimensions with `W` / `D` (for example, `W 1800 × D 1650 mm`), and car dimensions with `W` / `D` / `H` when height is present. Values and recorded units are retained; blank, incomplete, already-labelled and descriptive custom text is not fabricated or relabelled. The website price input and amount feedback use the interface sans-serif font; PDF price typography remains the approved Times-Bold.
 
 An optional `lift.configurationSnapshot` preserves the selected shared model in v4 drafts. Existing v4 drafts need no migration. `selectedConfiguration()` resolves a matching, validated shared snapshot before the current catalogue; selecting an Excel record removes it. The snapshot stays in its quotation even offline. Other shared records require sign-in. The Firebase migration retains the same IDs and snapshot format; provider session tokens are not migrated.
 
