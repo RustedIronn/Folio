@@ -36,6 +36,6 @@ dist-ssr
 /data/source/*.xlsx
 !/data/source/lift-models.xlsx
 
-# Local PDF verification outputs may include private reference-page images.
-/tmp/pdfs/
-/output/pdf/
+# Local verification outputs may include private reference-page images.
+/tmp/
+/output/

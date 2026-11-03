@@ -116,7 +116,7 @@ Fill the ignored `.env.local` file with the public Web app configuration for the
 | `VITE_FIREBASE_PROJECT_ID` | `projectId` |
 | `VITE_FIREBASE_APP_ID` | `appId` |
 
-Enable Email/Password Authentication, configure Firestore with the repository's rules, and authorize the actual development hostname in Firebase Authentication. Follow the [Firebase setup guide](docs/shared-lift-models.md) for the complete configuration.
+Enable Email/Password Authentication, configure Firestore with the repository's rules, and authorize the actual development hostname in Firebase Authentication. Keep email verification enabled. Firestore rules authorize verified accounts, isolate drafts by UID, and keep shared models separate.
 
 ```sh
 npm run dev
@@ -161,7 +161,7 @@ data/source/            Authoritative catalogue workbook; private local inputs
 data/reports/           Catalogue validation results
 scripts/                Conversion, emulator and PDF verification tooling
 tests/                  Domain, persistence, security and rendering tests
-docs/                   Technical contracts, setup guides and screenshots
+docs/                   Product screenshots and ignored private PDF reference
 public/assets/          Application and document branding
 ```
 
@@ -185,7 +185,6 @@ Company-specific materials are already tracked in this repository. Their presenc
 | `src/data/catalogue/liftCatalogue.json`, `data/reports/liftCatalogue.validation.json` | Catalogue-derived specifications, source cells and data-quality details. |
 | `public/assets/` | Altis logos, branding and document watermarks. |
 | `src/templates/altisQuotationTemplate.js` | Company-specific quotation, commercial and contractual wording and contact information. |
-| Reference-derived audits and mapping reports under `docs/` | Internal business/source analysis that may require redaction or distribution approval. |
 
 The private `customerdetails.xlsx` and `liftsquery.xlsx` workbooks, customer reference PDF and `.env.local` are ignored and untracked in the reviewed checkout. Keep them private. Ignore rules do not remove files previously committed.
 
@@ -198,20 +197,9 @@ The private `customerdetails.xlsx` and `liftsquery.xlsx` workbooks, customer ref
 - Catalogue updates use a deliberate Excel-to-JSON conversion, without live Excel synchronization.
 - Passenger capacity and maximum load remain employee-selected or entered; they are not inferred from model names or historical frequency.
 - No automatic quotation numbering, digital signatures or historical customer imports.
-- The existing total-floor / `G +` travel presentation has a [documented mapping question](docs/travel-height-mapping-findings.md); its semantics have not been silently changed.
+- Travel uses the existing Altis total-floor convention and prints a numeric value with `G +`; this should not be interpreted as a physical travel distance.
 
 Future work includes approved catalogue enrichment, further physical-device accessibility checks and release automation. These are prospective improvements, not current capabilities.
-
-## Developer documentation
-
-- [Quotation contract](docs/quotation-contract.md) — schema, defaults, resolution and PDF ownership.
-- [Employee workspace](docs/employee-workspace.md) — guest import, autosave, recovery and conflicts.
-- [Firebase shared-model setup](docs/shared-lift-models.md) — account configuration, storage and access rules.
-- [Catalogue source notes](docs/catalogue-data-notes.md) — conversion provenance and unresolved mappings.
-- [Deployment and verification record](docs/release-readiness-2026-11-03.md) — dated release evidence and known verification limits.
-- [Contributor guidance](AGENTS.md) — change boundaries and checks.
-
-Earlier design and source audits describe the application at the time they were written; use the current quotation contract for implementation work.
 
 ## Copyright, Trademarks & Proprietary Materials
 
