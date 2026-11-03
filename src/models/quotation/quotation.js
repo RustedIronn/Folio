@@ -1,3 +1,5 @@
+import { isSharedModel } from "../catalogue/sharedModels.js";
+
 export const QUOTATION_SCHEMA_VERSION = 4;
 export const DRAFT_STORAGE_KEY = "quoteflow:draft:v4";
 export const PROJECT_FIELDS = [
@@ -137,8 +139,13 @@ function technicalValues(quotation, record, template) {
 function materialValue(quotation, item, technical) {
   return item.source === "technical" ? technical[item.technicalKey] ?? "" : ownOr(quotation.materials.overrides, item.key, item.defaultValue ?? "");
 }
+export function selectedConfiguration(quotation, catalogue) {
+  const snapshot = quotation.lift.configurationSnapshot;
+  if (isSharedModel(snapshot) && snapshot.sourceRecordId === quotation.lift.catalogueId) return snapshot;
+  return catalogue.records.find((entry) => entry.sourceRecordId === quotation.lift.catalogueId) ?? null;
+}
 export function resolveQuotationDocument(quotation, catalogue, template) {
-  const record = catalogue.records.find((entry) => entry.sourceRecordId === quotation.lift.catalogueId) ?? null;
+  const record = selectedConfiguration(quotation, catalogue);
   const technical = technicalValues(quotation, record, template);
   const materials = Object.fromEntries(template.materials.map((item) => [item.key, materialValue(quotation, item, technical)]));
   const missing = [];
@@ -169,7 +176,7 @@ export function resolveQuotationDocument(quotation, catalogue, template) {
   if (Object.values(quotation.commercial.payment).every((value) => value !== "") && paymentTotal !== 100) missing.push({ path: "commercial.payment", label: "Payment percentages must total 100%" });
   return {
     templateVersion: template.version, missing,
-    provenance: { catalogueId: record?.sourceRecordId ?? "", catalogueSourceRow: record?.sourceRow ?? null, catalogueIssues: record?.dataQualityIssues ?? [] },
+    provenance: { catalogueId: record?.sourceRecordId ?? "", catalogueSourceRow: record?.sourceRow ?? null, catalogueIssues: record?.dataQualityIssues ?? [], configurationOrigin: record?.origin === "shared" ? "shared" : "catalogue" },
     warnings: (record?.dataQualityIssues ?? []).map((entry) => `Selected lift source note: ${entry.message}`),
     pages: {
       cover: { company: template.company, reference: composeReference(quotation.reference, template), date: quotation.metadata.date, customer: quotation.customer, attention: composeAttention(quotation.customer), subject: composeSubject(quotation.customer), letter: template.coverLetter },
@@ -185,6 +192,8 @@ export function isQuotationExportReady(documentData) { return documentData.missi
 export function applyConfiguration(quotation, record, { preserveOverrides = true } = {}) {
   const next = structuredClone(quotation);
   next.lift.catalogueId = record.sourceRecordId; next.lift.catalogueSourceRow = record.sourceRow;
+  if (isSharedModel(record)) next.lift.configurationSnapshot = structuredClone(record);
+  else delete next.lift.configurationSnapshot;
   if (!preserveOverrides) { next.lift.technicalOverrides = {}; next.materials.overrides = {}; }
   return next;
 }
@@ -194,7 +203,7 @@ export function getConfigurationSwitchImpact(quotation, nextRecord) {
 }
 export function setTechnicalOverride(quotation, key, value, catalogue, template) {
   const next = structuredClone(quotation);
-  const record = catalogue.records.find((entry) => entry.sourceRecordId === next.lift.catalogueId);
+  const record = selectedConfiguration(next, catalogue);
   const standard = { ...(record?.technical ?? {}), ...template.technicalDefaults }[key] ?? "";
   if (value === String(standard)) delete next.lift.technicalOverrides[key]; else next.lift.technicalOverrides[key] = value;
   return next;

@@ -35,7 +35,7 @@ export default function Select({ id, value, options, onChange, placeholder = "Ch
  * A controlled picker for approved catalogue records. Ranking remains outside
  * this component so `searchCatalogue()` stays the single matching authority.
  */
-export function Combobox({ id, value, options, onChange, query, onQueryChange, placeholder = "Search or choose", emptyMessage = "No matching options.", renderOption, selectedLabel, "aria-label": ariaLabel, "aria-describedby": ariaDescribedBy, "aria-invalid": ariaInvalid }) {
+export function Combobox({ id, value, options, onChange, query, onQueryChange, placeholder = "Search or choose", emptyMessage = "No matching options.", panelLabel = "Lift configurations", renderOption, selectedLabel, "aria-label": ariaLabel, "aria-describedby": ariaDescribedBy, "aria-invalid": ariaInvalid }) {
   const [open, setOpen] = useState(false);
   const selected = options.find((option) => option.value === value);
   const displayValue = open ? query : selectedLabel ?? selected?.label ?? query;
@@ -74,7 +74,7 @@ export function Combobox({ id, value, options, onChange, query, onQueryChange, p
       <BaseCombobox.Portal>
         <BaseCombobox.Positioner className="combobox-positioner" sideOffset={8} collisionPadding={12} align="start">
           <BaseCombobox.Popup className="select-panel combobox-panel" initialFocus={false}>
-            <p className="combobox-panel-label">Approved lift configurations</p>
+            <p className="combobox-panel-label">{panelLabel}</p>
             <BaseCombobox.List className="select-options combobox-options">
               {options.map((option, index) => <BaseCombobox.Item key={option.value} index={index} value={option.value} className="select-option combobox-option">
                 {renderOption ? renderOption(option) : option.label}

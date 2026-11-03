@@ -9,6 +9,10 @@ import Button from "./components/Button.jsx";
 import WorkflowSection from "./components/WorkflowSection.jsx";
 import WorkspaceSummary from "./components/WorkspaceSummary.jsx";
 import ConfirmationDialog from "./components/ConfirmationDialog.jsx";
+import AccountDialog from "./components/AccountDialog.jsx";
+import AccountControls from "./components/AccountControls.jsx";
+import CloudDraftsBar from "./components/CloudDraftsBar.jsx";
+import { draftSaveLabel } from "../models/quotation/workspace.js";
 import { useQuotationWorkflow } from "./hooks/useQuotationWorkflow.js";
 import "./App.css";
 
@@ -41,15 +45,16 @@ export default function App() {
       })}</nav>
       <div className="rail-bottom">
         <div className="rail-completion"><div><span>Quotation progress</span><strong>{overallProgress.percent}%</strong></div><progress max="100" value={overallProgress.percent} aria-label="Quotation completion" /><small>{overallProgress.completed} of {overallProgress.required} required details</small></div>
-        <div className={`draft-save save-status-${saveStatus}`} role="status"><span />{saveStatus === "saved" ? "All changes saved" : saveStatus === "saving" ? "Saving changes…" : "Unable to save changes"}</div>
+        <div className={`draft-save save-status-${saveStatus}`} role="status"><span />{draftSaveLabel(workflow.drafts)}</div>
         <Button variant="tertiary" className="rail-reset" onClick={() => setShowReset(true)}><RotateCcw size={14} aria-hidden="true" />Reset quotation</Button>
         <div className="rail-business"><span>AE</span><div><strong>Altis Elevators</strong><small>Quotation workspace</small></div></div>
       </div>
     </aside>
     <div className="product-body">
-      <header className="product-topbar"><div><span>Workspace</span><span>/</span><strong>{reference || "New quotation"}</strong><span className="topbar-draft">{workflow.exportReady ? "Ready" : "Draft"}</span></div><Button variant="secondary" onClick={() => workflow.visitStep("review")}>Review quotation<ArrowUpRight size={15} aria-hidden="true" /></Button></header>
+      <header className="product-topbar"><div><span>Workspace</span><span>/</span><strong>{reference || "New quotation"}</strong><span className="topbar-draft">{workflow.documentAccess.canDownload ? "Ready" : workflow.exportReady ? "Details complete" : "Draft"}</span></div><div className="topbar-actions"><Button variant="secondary" onClick={() => workflow.visitStep("review")}>Review quotation<ArrowUpRight size={15} aria-hidden="true" /></Button><AccountControls workflow={workflow} /></div></header>
       <div className="product-page">
         <header className="page-intro"><div><p className="page-eyebrow">ALTIS ELEVATORS <span>/</span> QUOTATION STUDIO</p><h1>{COPY[currentStep][0]}</h1><p>{COPY[currentStep][1]}</p></div><div className="page-step"><span>{String(currentStepIndex + 1).padStart(2, "0")}</span><small>/ 05</small></div></header>
+        <CloudDraftsBar workflow={workflow} />
         <nav className="journey" aria-label="Quotation workflow">{workflowProgress.map((step, index) => <button key={step.id} type="button" className={`journey-step state-${step.state}`} aria-current={step.id === currentStep ? "step" : undefined} aria-label={`Step ${index + 1}: ${step.label}. ${stateLabel(step.state)}`} onClick={() => workflow.visitStep(step.id)}><span className="journey-number">{step.state === "complete" ? <Check size={15} /> : index + 1}</span><span><strong>{step.label}</strong><small>{step.required ? `${step.completed}/${step.required} details` : stateLabel(step.state)}</small></span></button>)}</nav>
         <p className="mobile-current-step">Step {currentStepIndex + 1} of 5 · {current.label}</p>
         <div className={`editing-layout layout-${currentStep}`}>
@@ -60,6 +65,7 @@ export default function App() {
       </div>
     </div>
     {pendingConfiguration && <ConfirmationDialog title="Replace configuration?" description={`Switching changes selected-lift values. ${pendingConfiguration.impact.overrideCount ? `Choose whether to keep ${pendingConfiguration.impact.overrideCount} customization(s).` : "Continue only if intended."}`} onDismiss={() => workflow.setPendingConfiguration(null)}><Button variant="tertiary" autoFocus onClick={() => workflow.setPendingConfiguration(null)}>Cancel</Button>{pendingConfiguration.impact.overrideCount > 0 && <Button variant="secondary" onClick={() => workflow.confirmConfiguration(true)}>Keep customizations</Button>}<Button onClick={() => workflow.confirmConfiguration(false)}>Use selected-lift values</Button></ConfirmationDialog>}
-    {showReset && <ConfirmationDialog title="Reset quotation?" description="All locally saved entry data for this quotation will be removed. This cannot be undone." onDismiss={() => setShowReset(false)}><Button variant="secondary" autoFocus onClick={() => setShowReset(false)}>Cancel</Button><Button variant="danger" onClick={() => { workflow.resetDraft(); setShowReset(false); }}>Reset quotation</Button></ConfirmationDialog>}
+    {showReset && <ConfirmationDialog title="Reset quotation?" description={workflow.employee.user ? "Start a new quotation. Existing cloud drafts and local employee copies will be kept in Saved quotations." : "Clear the current guest quotation and start again. This cannot be undone."} onDismiss={() => setShowReset(false)}><Button variant="secondary" autoFocus onClick={() => setShowReset(false)}>Cancel</Button><Button variant="danger" onClick={() => { workflow.resetDraft(); setShowReset(false); }}>Reset quotation</Button></ConfirmationDialog>}
+    {workflow.authIntent && <AccountDialog session={workflow.employee} onDismiss={() => workflow.setAuthIntent(null)} onDone={workflow.completeSignIn} />}
   </main>;
 }

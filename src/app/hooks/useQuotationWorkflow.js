@@ -1,7 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
-import catalogue from "../../data/catalogue/liftCatalogue.json";
+import approvedCatalogue from "../../data/catalogue/liftCatalogue.json";
+import { quotationCatalogue } from "../../models/catalogue/sharedModels.js";
+import useSharedModels from "./useSharedModels.js";
+import useEmployeeSession from "./useEmployeeSession.js";
+import useQuotationDrafts from "./useQuotationDrafts.js";
+import { quotationDocumentAccess } from "../../services/employeeAccess.js";
 import { ALTIS_QUOTATION_TEMPLATE as template } from "../../templates/altisQuotationTemplate.js";
-import { DRAFT_STORAGE_KEY, applyConfiguration, composeReference, createQuotation, getConfigurationSwitchImpact, isQuotationExportReady, loadDraft, resolveQuotationDocument, saveDraft, suggestFinancialYear } from "../../models/quotation/quotation.js";
+import { applyConfiguration, composeReference, getConfigurationSwitchImpact, isQuotationExportReady, resolveQuotationDocument, suggestFinancialYear } from "../../models/quotation/quotation.js";
 import { getWorkflowProgress, overallCompletion, workflowSectionForPath, WORKFLOW_STEPS } from "../../models/quotation/workflow.js";
 
 export const FIELD_TARGETS = {
@@ -12,17 +17,23 @@ export const FIELD_TARGETS = {
 };
 
 export function useQuotationWorkflow() {
-  const [quotation, setQuotation] = useState(() => typeof window === "undefined" ? createQuotation(template) : loadDraft(window.localStorage, template) ?? createQuotation(template));
+  const employee = useEmployeeSession();
+  const drafts = useQuotationDrafts(employee);
+  const { quotation, setQuotation } = drafts;
+  const sharedModels = useSharedModels(employee);
+  const catalogue = useMemo(() => quotationCatalogue(approvedCatalogue, sharedModels.records, quotation), [sharedModels.records, quotation]);
   const [pendingConfiguration, setPendingConfiguration] = useState(null);
   const [showReviewErrors, setShowReviewErrors] = useState(false);
   const [currentStep, setCurrentStep] = useState("customer");
   const [visitedSteps, setVisitedSteps] = useState(() => new Set(["customer"]));
   const [attemptedSteps, setAttemptedSteps] = useState(() => new Set());
-  const [saveStatus, setSaveStatus] = useState("saving");
+  const [authIntent, setAuthIntent] = useState(null);
   const [previewRequested, setPreviewRequested] = useState(false);
-  const resolved = useMemo(() => resolveQuotationDocument(quotation, catalogue, template), [quotation]);
+  const resolved = useMemo(() => resolveQuotationDocument(quotation, catalogue, template), [quotation, catalogue]);
   const exportReady = isQuotationExportReady(resolved);
-  const workflowProgress = useMemo(() => getWorkflowProgress(resolved, visitedSteps, attemptedSteps, currentStep), [resolved, visitedSteps, attemptedSteps, currentStep]);
+  const documentAccess = quotationDocumentAccess(employee, exportReady);
+  const saveStatus = !drafts.localSaved ? "unable" : drafts.status === "error" || drafts.status === "conflict" ? "local" : drafts.status === "saving" || drafts.status === "pending" ? "saving" : "saved";
+  const workflowProgress = useMemo(() => getWorkflowProgress(resolved, visitedSteps, attemptedSteps, currentStep).map((step) => step.id === "review" && step.state === "ready" && !documentAccess.canPreview ? { ...step, state: "available" } : step), [resolved, visitedSteps, attemptedSteps, currentStep, documentAccess.canPreview]);
   const overallProgress = useMemo(() => overallCompletion(workflowProgress), [workflowProgress]);
   const currentStepIndex = WORKFLOW_STEPS.findIndex((step) => step.id === currentStep);
   const errors = (path) => showReviewErrors || attemptedSteps.has(workflowSectionForPath(path)) ? resolved.missing.filter((entry) => entry.path === path).map((entry) => entry.label).join(" ") : "";
@@ -34,11 +45,11 @@ export function useQuotationWorkflow() {
   ].filter(([, entries]) => entries.length), [resolved.missing]);
 
   useEffect(() => {
-    const savingTimer = window.setTimeout(() => setSaveStatus("saving"), 0);
-    let completionTimer;
-    try { saveDraft(window.localStorage, quotation); completionTimer = window.setTimeout(() => setSaveStatus("saved"), 250); } catch { completionTimer = window.setTimeout(() => setSaveStatus("unable"), 0); }
-    return () => { window.clearTimeout(savingTimer); window.clearTimeout(completionTimer); };
-  }, [quotation]);
+    if (!employee.authorized) {
+      const timer = window.setTimeout(() => { setPreviewRequested(false); setPendingConfiguration(null); }, 0);
+      return () => window.clearTimeout(timer);
+    }
+  }, [employee.authorized]);
 
   const update = (section, field, value) => setQuotation((current) => ({ ...current, [section]: { ...current[section], [field]: value } }));
   const updateProject = (field, value) => setQuotation((current) => ({ ...current, lift: { ...current.lift, project: { ...current.lift.project, [field]: value } } }));
@@ -46,6 +57,9 @@ export function useQuotationWorkflow() {
   function chooseConfiguration(id) {
     const record = catalogue.records.find((entry) => entry.sourceRecordId === id);
     if (!record) return;
+    requestConfiguration(record);
+  }
+  function requestConfiguration(record) {
     const impact = getConfigurationSwitchImpact(quotation, record);
     if (impact.requiresConfirmation) setPendingConfiguration({ record, impact }); else setQuotation((current) => applyConfiguration(current, record));
   }
@@ -54,17 +68,24 @@ export function useQuotationWorkflow() {
     setQuotation((current) => applyConfiguration(current, pendingConfiguration.record, { preserveOverrides }));
     setPendingConfiguration(null);
   }
+  async function addSharedModel(input, id) {
+    const record = await sharedModels.add(input, id);
+    requestConfiguration(record);
+    return record;
+  }
   function visitStep(id, validate = false) { setCurrentStep(id); setVisitedSteps((current) => new Set([...current, id])); if (validate) setAttemptedSteps((current) => new Set([...current, id])); }
   function continueStep() { setAttemptedSteps((current) => new Set([...current, currentStep])); if (currentStepIndex < WORKFLOW_STEPS.length - 1) visitStep(WORKFLOW_STEPS[currentStepIndex + 1].id); }
   function previousStep() { if (currentStepIndex > 0) visitStep(WORKFLOW_STEPS[currentStepIndex - 1].id); }
-  function resetDraft() { window.localStorage.removeItem(DRAFT_STORAGE_KEY); setQuotation(createQuotation(template)); setShowReviewErrors(false); setPreviewRequested(false); setCurrentStep("customer"); setVisitedSteps(new Set(["customer"])); setAttemptedSteps(new Set()); }
+  function resetDraft() { drafts.startNew(); setShowReviewErrors(false); setPreviewRequested(false); setCurrentStep("customer"); setVisitedSteps(new Set(["customer"])); setAttemptedSteps(new Set()); }
+  function requestPreview() { if (documentAccess.canPreview) setPreviewRequested(true); else setAuthIntent("pdf"); }
+  function completeSignIn() { if (!employee.authorized) return; setAuthIntent(null); if (authIntent === "pdf") setPreviewRequested(true); }
   function jumpToIssue(entry) {
     const step = workflowSectionForPath(entry.path);
     visitStep(step, true);
     window.setTimeout(() => { const target = document.getElementById(FIELD_TARGETS[entry.path] || step); target?.focus?.(); target?.scrollIntoView({ behavior: "smooth", block: "center" }); }, 0);
   }
   return {
-    catalogue, template, quotation, setQuotation, resolved, exportReady, workflowProgress, overallProgress, currentStep, currentStepIndex, saveStatus,
+    catalogue, employee, drafts, documentAccess, authIntent, setAuthIntent, completeSignIn, requestPreview, sharedModels, addSharedModel, template, quotation, setQuotation, resolved, exportReady, workflowProgress, overallProgress, currentStep, currentStepIndex, saveStatus,
     pendingConfiguration, setPendingConfiguration, showReviewErrors, setShowReviewErrors, previewRequested, setPreviewRequested,
     errors, readinessGroups, update, updateProject, updatePayment, chooseConfiguration, confirmConfiguration, visitStep, continueStep, previousStep, resetDraft, jumpToIssue,
     reference: composeReference(quotation.reference, template), suggestedYear: suggestFinancialYear(quotation.metadata.date), stepFor: (id) => workflowProgress.find((step) => step.id === id),

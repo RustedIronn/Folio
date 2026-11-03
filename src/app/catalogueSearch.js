@@ -5,7 +5,7 @@ export function normaliseCatalogueSearch(value) {
 }
 
 export function configurationName(record) {
-  return `#${record.sourceRecordId} · ${record.technical.liftType || "Lift type not recorded"} — ${record.quantityType || "Configuration description not recorded"}`;
+  return `${record.origin === "shared" ? "Team model" : `#${record.sourceRecordId}`} · ${record.technical.liftType || "Lift type not recorded"} — ${record.quantityType || "Configuration description not recorded"}`;
 }
 
 export function configurationCharacteristics(record) {

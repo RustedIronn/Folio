@@ -1,0 +1,67 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function verifiedUser() {
+      return request.auth != null && request.auth.token.email_verified == true;
+    }
+    function text(value, maximum) {
+      return value is string && value.size() <= maximum;
+    }
+    function requiredText(value, maximum) {
+      return text(value, maximum) && value.size() > 0 && value.matches('(?s).*\\S.*');
+    }
+    match /liftModels/{modelId} {
+      allow read: if verifiedUser();
+      allow create: if verifiedUser()
+        && modelId.matches('^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$')
+        && request.resource.data.keys().hasAll(['id', 'description', 'lift_type', 'speed', 'car_door', 'door_frame', 'landing_door', 'motor', 'controller', 'rope', 'created_by', 'created_at'])
+        && request.resource.data.keys().hasOnly(['id', 'description', 'lift_type', 'speed', 'car_door', 'door_frame', 'landing_door', 'motor', 'controller', 'rope', 'created_by', 'created_at'])
+        && request.resource.data.id == modelId
+        && request.resource.data.created_by == request.auth.uid
+        && request.resource.data.created_at == request.time
+        && requiredText(request.resource.data.description, 180)
+        && requiredText(request.resource.data.lift_type, 80)
+        && text(request.resource.data.speed, 180)
+        && text(request.resource.data.car_door, 180)
+        && text(request.resource.data.door_frame, 180)
+        && text(request.resource.data.landing_door, 180)
+        && text(request.resource.data.motor, 180)
+        && text(request.resource.data.controller, 180)
+        && text(request.resource.data.rope, 180);
+      allow update, delete: if false;
+    }
+    function quotationShape(q) {
+      return q is map && q.schemaVersion == 4
+        && q.keys().hasAll(['schemaVersion', 'reference', 'metadata', 'customer', 'lift', 'materials', 'commercial', 'document'])
+        && q.reference is map && q.metadata is map && q.customer is map
+        && q.lift is map && q.materials is map && q.commercial is map && q.document is map
+        && q.lift.project is map && q.lift.installation is map && q.lift.technicalOverrides is map
+        && q.materials.overrides is map && q.commercial.payment is map
+        && q.lift.installation.shaft is map && q.lift.installation.car is map && q.lift.installation.cabinOpening is map;
+    }
+    function draftShape(data, uid) {
+      return data.keys().hasAll(['schemaVersion', 'ownerUid', 'quotation', 'revision', 'lastMutationId', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['schemaVersion', 'ownerUid', 'quotation', 'revision', 'lastMutationId', 'createdAt', 'updatedAt'])
+        && data.schemaVersion == 4 && data.ownerUid == uid && quotationShape(data.quotation)
+        && data.revision is int && data.revision > 0
+        && data.lastMutationId is string
+        && data.lastMutationId.matches('^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$')
+        && data.createdAt is timestamp && data.updatedAt == request.time;
+    }
+    match /users/{uid}/quotationDrafts/{draftId} {
+      allow read: if verifiedUser() && request.auth.uid == uid;
+      allow create: if verifiedUser() && request.auth.uid == uid
+        && draftId.matches('^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$')
+        && draftShape(request.resource.data, uid)
+        && request.resource.data.revision == 1 && request.resource.data.createdAt == request.time;
+      allow update: if verifiedUser() && request.auth.uid == uid
+        && draftShape(request.resource.data, uid)
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.revision == resource.data.revision + 1;
+      allow delete: if false;
+    }
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

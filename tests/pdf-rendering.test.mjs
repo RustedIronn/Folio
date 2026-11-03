@@ -44,3 +44,15 @@ test("missing rope stays blank in a renderable draft instead of inheriting anoth
   assert.ok(documentData.missing.some((entry) => entry.path === "materials.rope"));
   assert.equal(documentData.pages.materials.rows.find((row) => row.key === "rope").value, "");
 });
+
+test("a saved team model renders six pages from its snapshot without a server connection", async () => {
+  const { applyConfiguration } = await import("../src/models/quotation/quotation.js");
+  const { emptySharedModel, sharedModelPayload, sharedModelRecord } = await import("../src/models/catalogue/sharedModels.js");
+  const input = { ...emptySharedModel(), quantityType: "Synthetic team configuration", liftType: "Example category", controller: "Example controller", motor: "Example motor", rope: "Example rope" };
+  const record = sharedModelRecord(sharedModelPayload(input, "ab000001-1111-4222-8333-000000000001"));
+  const { buffer, layout, documentData } = await renderQuotation(applyConfiguration(sampleQuotation(), record));
+  assert.equal(layout.children.length, 6);
+  assert.equal([...buffer.toString("latin1").matchAll(/\/MediaBox\s*\[([^\]]+)\]/g)].length, 6);
+  assert.equal(documentData.pages.installation.quantityType, input.quantityType);
+  assert.equal(documentData.pages.materials.rows.find((row) => row.key === "rope").value, input.rope);
+});
