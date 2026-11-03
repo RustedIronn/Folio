@@ -44,12 +44,12 @@ function ContactFooter({ contacts }) {
   });
   return <View style={s.contactFooter}>{formatted.map((value, index) => <View key={index} style={[s.contactCell, { width: widths[index], borderRightWidth: index === 3 ? 0 : 0.4 }]}><Text>{value}</Text></View>)}</View>;
 }
-function PdfPage({ children, page, cover = false, branding, assets }) {
+function PdfPage({ children, page, cover = false, branding, assets, printable }) {
   return <Page size="LETTER" style={s.page} wrap={false}>
-    {cover && <View style={s.sidebar} />}
+    {cover && !printable && <View style={s.sidebar} />}
     {branding && <Image src={assets.watermark} style={s.watermark} />}
-    {cover && <>{branding && <Image src={assets.lockup} style={s.brandLockup} />}<Text style={s.iso}>{page.company.isoStatement}</Text></>}
-    {children}{cover ? <ContactFooter contacts={page.company.contacts} /> : <Footer footer={page.footer} />}
+    {cover && !printable && <>{branding && <Image src={assets.lockup} style={s.brandLockup} />}<Text style={s.iso}>{page.company.isoStatement}</Text></>}
+    {children}{!printable && (cover ? <ContactFooter contacts={page.company.contacts} /> : <Footer footer={page.footer} />)}
   </Page>;
 }
 function CoverPage({ page, ...props }) {
@@ -117,8 +117,9 @@ function ObligationsPage({ page, ...props }) {
     </Region>
   </PdfPage>;
 }
-export default function AltisQuotationPdf({ documentData, branding = true, assets = { lockup: "/assets/altis-brand-lockup.png", watermark: "/assets/altis-watermark.png" }, onRender }) {
+export default function AltisQuotationPdf({ documentData, variant = "branded", branding = true, assets = { lockup: "/assets/altis-brand-lockup.png", watermark: "/assets/altis-watermark.png" }, onRender }) {
   const pages = documentData.pages;
-  const props = { branding, assets };
+  const printable = variant === "printable";
+  const props = { branding: branding && !printable, assets, printable };
   return <Document title={pages.cover.reference} author={pages.cover.company.name} onRender={(result) => { assertDocumentLayout(result); onRender?.(result); }}><CoverPage page={pages.cover} {...props} /><InstallationPage page={pages.installation} {...props} /><PricePage page={pages.priceSchedule} {...props} /><WarrantyPage page={pages.warranty} {...props} /><MaterialsPage page={pages.materials} {...props} /><ObligationsPage page={pages.obligations} {...props} /></Document>;
 }

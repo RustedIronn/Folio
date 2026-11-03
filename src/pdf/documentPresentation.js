@@ -1,6 +1,10 @@
 // Presentation only. All business values have already been resolved.
 export const LETTER = { width: 612, height: 792 };
 
+export function pdfOutputFileName(fileName, variant) {
+  return variant === "printable" ? fileName.replace(/\.pdf$/i, "") + "-print-friendly.pdf" : fileName;
+}
+
 export function displayDate(value) {
   const date = String(value ?? "");
   return /^\d{4}-\d{2}-\d{2}$/.test(date) ? date.split("-").reverse().join(".") : date;

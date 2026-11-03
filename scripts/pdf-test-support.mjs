@@ -10,7 +10,7 @@ import { ALTIS_QUOTATION_TEMPLATE as template } from "../src/templates/altisQuot
 const root = path.resolve(import.meta.dirname, "..");
 export const catalogue = JSON.parse(await fs.readFile(path.join(root, "src/data/catalogue/liftCatalogue.json"), "utf8"));
 let renderer;
-export async function renderQuotation(quotation) {
+export async function renderQuotation(quotation, { variant = "branded" } = {}) {
   if (!renderer) {
     let source = await fs.readFile(path.join(root, "src/pdf/AltisQuotationPdf.jsx"), "utf8");
     for (const specifier of ["react", "@react-pdf/renderer"]) source = source.replace(`from "${specifier}"`, `from "${import.meta.resolve(specifier)}"`);
@@ -19,10 +19,10 @@ export async function renderQuotation(quotation) {
     renderer = (await import("data:text/javascript;base64," + Buffer.from(code + "\n//# sourceURL=quoteflow-pdf-verification.mjs").toString("base64"))).default;
   }
   const assets = {};
-  for (const [key, file] of [["lockup", "altis-brand-lockup.png"], ["watermark", "altis-watermark.png"]]) assets[key] = "data:image/png;base64," + (await fs.readFile(path.join(root, "public/assets", file))).toString("base64");
+  if (variant !== "printable") for (const [key, file] of [["lockup", "altis-brand-lockup.png"], ["watermark", "altis-watermark.png"]]) assets[key] = "data:image/png;base64," + (await fs.readFile(path.join(root, "public/assets", file))).toString("base64");
   const documentData = resolveQuotationDocument(quotation, catalogue, template);
   let layout;
-  const buffer = await renderToBuffer(React.createElement(renderer, { documentData, assets, onRender: (result) => { layout = result._INTERNAL__LAYOUT__DATA_; } }));
+  const buffer = await renderToBuffer(React.createElement(renderer, { documentData, variant, assets, onRender: (result) => { layout = result._INTERNAL__LAYOUT__DATA_; } }));
   return { buffer, layout, documentData };
 }
 

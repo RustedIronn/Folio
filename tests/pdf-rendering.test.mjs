@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { renderQuotation, sampleCases, sampleQuotation } from "../scripts/pdf-test-support.mjs";
-import { displayDate, displayPrice, displayCapacity, displayTravelHeight, displayDimensions } from "../src/pdf/documentPresentation.js";
+import { displayDate, displayPrice, displayCapacity, displayTravelHeight, displayDimensions, pdfOutputFileName } from "../src/pdf/documentPresentation.js";
 
 test("PDF presentation formats resolved values without changing calculations or legacy wording", () => {
   assert.equal(displayDate("2026-11-02"), "02.11.2026");
@@ -43,7 +43,27 @@ for (const [name, quotation] of Object.entries(sampleCases())) {
     assert.equal(documentData.pages.materials.rows.length, 12);
     assert.equal(JSON.stringify(quotation), original);
   });
+  test(`${name} print-friendly quotation keeps six pages and body text without branding or footers`, async () => {
+    const original = JSON.stringify(quotation);
+    const { buffer, layout, documentData } = await renderQuotation(quotation, { variant: "printable" });
+    assert.equal(layout.children.length, 6);
+    assert.equal((buffer.toString("latin1").match(/\/Type\s*\/Page\b/g) ?? []).length, 6);
+    assert.equal((buffer.toString("latin1").match(/\/Subtype\s*\/Image/g) ?? []).length, 0);
+    const collect = (node) => (node.type === "TEXT_INSTANCE" ? node.value : "") + (node.children ?? []).map(collect).join("");
+    const text = collect(layout);
+    assert.ok(!text.includes(documentData.pages.cover.company.isoStatement));
+    assert.ok(!text.includes(documentData.pages.installation.footer.executive));
+    assert.ok(!text.includes(documentData.pages.installation.footer.customer));
+    for (const value of [documentData.pages.cover.reference, documentData.pages.installation.quantityAndType, ...documentData.pages.warranty.sections.flat(), ...documentData.pages.materials.rows.map((row) => row.value), ...documentData.pages.obligations.ours, ...documentData.pages.obligations.customer]) assert.ok(text.includes(value));
+    assert.equal(JSON.stringify(quotation), original);
+  });
 }
+
+test("PDF versions have distinct filenames without changing the branded filename", () => {
+  assert.equal(pdfOutputFileName("AE-QUO-0001.pdf", "branded"), "AE-QUO-0001.pdf");
+  assert.equal(pdfOutputFileName("AE-QUO-0001.pdf", "printable"), "AE-QUO-0001-print-friendly.pdf");
+  assert.equal(pdfOutputFileName("AE-QUO-0001.PDF", "printable"), "AE-QUO-0001-print-friendly.pdf");
+});
 
 test("excessively long printable content fails explicitly instead of being clipped", async () => {
   const quotation = sampleQuotation();
