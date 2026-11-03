@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { renderQuotation, sampleCases, sampleQuotation } from "../scripts/pdf-test-support.mjs";
-import { displayDate, displayPrice, displayCapacity } from "../src/pdf/documentPresentation.js";
+import { displayDate, displayPrice, displayCapacity, displayTravelHeight } from "../src/pdf/documentPresentation.js";
 
 test("PDF presentation formats resolved values without changing calculations or legacy wording", () => {
   assert.equal(displayDate("2026-11-02"), "02.11.2026");
@@ -12,6 +12,14 @@ test("PDF presentation formats resolved values without changing calculations or 
   assert.equal(displayPrice(""), "");
   assert.equal(displayCapacity("6 Persons - Maximum Load - 408 Kgs"), "6 Persons, 408 Kg");
   assert.equal(displayCapacity("Legacy capacity description"), "Legacy capacity description");
+});
+
+test("PDF travel prefix preserves missing values and existing custom wording", () => {
+  assert.equal(displayTravelHeight("4"), "G + 4");
+  assert.equal(displayTravelHeight(5), "G + 5");
+  assert.equal(displayTravelHeight("0"), "G + 0");
+  for (const value of ["", " ", null, undefined]) assert.equal(displayTravelHeight(value), "");
+  for (const value of ["G + 4", "G+4", "Ground + 4 upper floors", "Custom arrangement"]) assert.equal(displayTravelHeight(value), value);
 });
 
 for (const [name, quotation] of Object.entries(sampleCases())) {

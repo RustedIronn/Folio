@@ -43,7 +43,7 @@ Employee-entry shortcuts: `src/app/entryOptions.js` contains curated passenger/l
 
 Tax-description choices offer the original template wording, 50%/100% GST bill wording, and custom entry; these strings do not calculate tax or alter price. Advanced technical choices reuse exact values from the same approved catalogue field (speed, door/frame/protection, motor, controller, rope). They do not certify compatibility across configurations. Ambiguous rope spelling `1 3 mm` is not offered as a shortcut; original source and saved values remain intact. Category, ambiguous rescue notes, and remaining free-form fields stay text inputs.
 
-Altis convention (owner-confirmed): the PDF's existing “Travel Height” field represents total floors served including Ground, not a physical distance. Explicit standard floor edits set it to `upperFloors + 1`; custom arrangements remain editable. Opening a saved draft or editing dimensions does not rewrite its saved travel wording. Schema v4, draft migrations, and PDF labels remain unchanged.
+Altis convention (owner-confirmed): the PDF's existing “Travel Height” field represents total floors served including Ground, not a physical distance. Explicit standard floor edits set it to `upperFloors + 1`; custom arrangements remain editable. Opening a saved draft or editing dimensions does not rewrite its saved travel wording. PDF presentation prefixes a plain integer with `G + ` (stored `5` prints `G + 5`); blank, already-prefixed and custom descriptions remain intact. This does not subtract Ground or change the stored floor count. Schema v4, draft migrations, and PDF labels remain unchanged.
 
 ## Required for final export
 

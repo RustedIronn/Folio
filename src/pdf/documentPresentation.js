@@ -15,6 +15,11 @@ export function displayCapacity(capacity) {
   return String(capacity ?? "").replace(/^(\d+) Persons - Maximum Load - ([\d.]+) Kgs$/, "$1 Persons, $2 Kg");
 }
 
+export function displayTravelHeight(value) {
+  const travel = String(value ?? "").trim();
+  return /^\d+$/.test(travel) ? `G + ${travel}` : travel;
+}
+
 // PDF generation must fail explicitly rather than return clipped printable content.
 // React PDF exposes the same layout tree to both its browser and Node onRender callbacks.
 export function assertDocumentLayout({ _INTERNAL__LAYOUT__DATA_: layout }) {
