@@ -32,17 +32,28 @@ Employees can move directly between sections. Inputs are retained while navigati
 
 ## Screenshots
 
-These are real captures of the deployed application using **synthetic quotation data** in an isolated visitor session. Names, addresses, amounts and editable commercial wording shown here are illustrative; they are not customer records, historical prices or approved specification examples.
+Real captures of the current application, taken locally in an isolated visitor session with **synthetic quotation data**. The examples do not contain customer records, employee accounts or historical prices. Amounts and project details are illustrative; catalogue specifications and company wording remain subject to the proprietary-materials notice below.
 
-**Customer workspace and live quotation summary**
+**Customer workspace** — quotation details, guided navigation and the contextual project summary.
 
-![Folio customer workspace with a synthetic recipient and project](docs/screenshots/customer-workspace.png)
+![Folio customer workspace with synthetic recipient and project details](docs/screenshots/customer-workspace.png)
 
-**Price entry and quotation-specific commercial wording**
+**Lift & installation** — searchable configurations, employee-entered capacity and installation details.
 
-![Folio pricing controls with an illustrative INR amount and synthetic terms](docs/screenshots/quotation-pricing.png)
+![Folio lift configuration and installation workspace using a synthetic quotation](docs/screenshots/lift-installation.png)
 
-Altis branding visible in these screenshots remains subject to the proprietary-materials notice below.
+**Commercial terms** — price entry, amount in words, payment stages and the quotation summary.
+
+![Folio commercial workspace with an illustrative INR amount](docs/screenshots/quotation-pricing.png)
+
+<details>
+<summary>Mobile workspace</summary>
+
+The same five-step workflow adapts to a compact navigation and stacked editing layout.
+
+<img src="docs/screenshots/mobile-workspace.png" alt="Folio mobile lift and installation workspace with synthetic quotation data" width="390" />
+
+</details>
 
 ## PDF preview and export
 
