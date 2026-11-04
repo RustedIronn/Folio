@@ -39,7 +39,7 @@ export default function App() {
           <div className="editing-main">{workflowProgress.map((step) => { const Step = STEPS[step.id]; return <WorkflowSection key={step.id} step={step} active={step.id === currentStep} onBack={step.id === "customer" ? undefined : workflow.previousStep} onContinue={step.id === "review" ? undefined : workflow.continueStep}><Step workflow={workflow} /></WorkflowSection>; })}</div>
           {currentStep !== "review" && <WorkspaceSummary workflow={workflow} />}
         </div>
-        <footer className="product-footer"><span>ALTIS ELEVATORS</span><p>Quotation workspace</p><span>QuoteFlow</span></footer>
+        <footer className="product-footer"><span>ALTIS ELEVATORS</span><p>Quotation workspace</p><span>Folio</span></footer>
       </div>
     </main>
     {pendingConfiguration && <ConfirmationDialog title="Replace configuration?" description={`Switching changes selected-lift values. ${pendingConfiguration.impact.overrideCount ? `Choose whether to keep ${pendingConfiguration.impact.overrideCount} customization(s).` : "Continue only if intended."}`} onDismiss={() => workflow.setPendingConfiguration(null)}><Button variant="tertiary" autoFocus onClick={() => workflow.setPendingConfiguration(null)}>Cancel</Button>{pendingConfiguration.impact.overrideCount > 0 && <Button variant="secondary" onClick={() => workflow.confirmConfiguration(true)}>Keep customizations</Button>}<Button onClick={() => workflow.confirmConfiguration(false)}>Use selected-lift values</Button></ConfirmationDialog>}

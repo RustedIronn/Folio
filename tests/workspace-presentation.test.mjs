@@ -167,6 +167,8 @@ test("sidebar retains five direct navigation actions and truthful save feedback"
   assert.ok(html.includes("Saved locally"));
   assert.ok(html.includes("cloud unavailable"));
   assert.ok(html.includes("Reset quotation"));
+  assert.ok(html.includes("<strong>Folio</strong>"));
+  assert.ok(!html.includes("QuoteFlow"));
   assert.ok(html.includes("Review &amp; PDF. Available"));
   assert.ok(!html.includes("0/7"));
 });

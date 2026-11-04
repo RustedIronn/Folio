@@ -12,8 +12,8 @@ export default function Sidebar({ workflow, onReset }) {
   const saveTitle = drafts.status === "loading" ? "Opening quotation" : saveStatus === "saving" ? "Saving draft" : saveStatus === "unable" ? "Save needs attention" : saveStatus === "local" ? "Saved locally" : "Draft saved";
 
   return <aside className="product-rail" aria-label="Quotation navigator">
-    <a className="product-brand" href="#customer" onClick={(event) => { event.preventDefault(); workflow.visitStep("customer"); }} aria-label="Altis QuoteFlow home"><img src="/assets/altis-emblem.png" alt="" /><span>ALTIS<small>ELEVATORS</small></span></a>
-    <div className="rail-project"><div><strong>QuoteFlow</strong><span>Quotation workspace</span></div></div>
+    <a className="product-brand" href="#customer" onClick={(event) => { event.preventDefault(); workflow.visitStep("customer"); }} aria-label="Altis Folio home"><img src="/assets/altis-emblem.png" alt="" /><span>ALTIS<small>ELEVATORS</small></span></a>
+    <div className="rail-project"><div><strong>Folio</strong><span>Quotation workspace</span></div></div>
     <p className="rail-caption">Quotation steps</p>
     <nav className="rail-navigation" aria-label="Quotation sections">{workflowProgress.map((step, index) => {
       const current = step.id === currentStep;

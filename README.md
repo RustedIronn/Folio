@@ -1,6 +1,6 @@
-# QuoteFlow
+# Folio
 
-QuoteFlow is a quotation workspace developed for **Altis Elevators**. It brings lift selection, project details, commercial terms and document preparation into one guided workflow, reducing repeated entry while keeping quotations consistent with the company's catalogue and approved format.
+Folio is a quotation workspace developed for **Altis Elevators**. It brings lift selection, project details, commercial terms and document preparation into one guided workflow, reducing repeated entry while keeping quotations consistent with the company's catalogue and approved format.
 
 **[Open the live application](https://quote-flow-azure.vercel.app/)**
 
@@ -36,11 +36,11 @@ These are real captures of the deployed application using **synthetic quotation 
 
 **Customer workspace and live quotation summary**
 
-![QuoteFlow customer workspace with a synthetic recipient and project](docs/screenshots/customer-workspace.png)
+![Folio customer workspace with a synthetic recipient and project](docs/screenshots/customer-workspace.png)
 
 **Price entry and quotation-specific commercial wording**
 
-![QuoteFlow pricing controls with an illustrative INR amount and synthetic terms](docs/screenshots/quotation-pricing.png)
+![Folio pricing controls with an illustrative INR amount and synthetic terms](docs/screenshots/quotation-pricing.png)
 
 Altis branding visible in these screenshots remains subject to the proprietary-materials notice below.
 
@@ -205,10 +205,10 @@ Future work includes approved catalogue enrichment, further physical-device acce
 
 ## Copyright, Trademarks & Proprietary Materials
 
-QuoteFlow was developed for the Altis Elevators quotation workflow. Altis Elevators' branding, names, logos, approved quotation templates, technical specifications and company-specific data remain proprietary to their respective rights holders.
+Folio was developed for the Altis Elevators quotation workflow. Altis Elevators' branding, names, logos, approved quotation templates, technical specifications and company-specific data remain proprietary to their respective rights holders.
 
 Public repository visibility does **not** grant permission to commercially reuse those proprietary materials. Obtain permission from the applicable rights holders before using them in another product, service or commercial document.
 
-The Altis name and branding identify the intended business context. This notice does not assert registered-trademark status or assign ownership of QuoteFlow's source code to Altis Elevators.
+The Altis name and branding identify the intended business context. This notice does not assert registered-trademark status or assign ownership of Folio's source code to Altis Elevators.
 
 No open-source license is currently included in this repository. This notice does not create a software license or grant additional rights; third-party dependencies remain subject to their own applicable licenses.

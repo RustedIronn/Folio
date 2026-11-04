@@ -13,7 +13,7 @@ export function sharedModelsError(error) {
     case "auth/operation-not-allowed": return "Email/password registration is not enabled. Ask the administrator to enable it in Firebase Authentication.";
     case "auth/unauthorized-domain": case "auth/unauthorized-continue-uri": return "This website is not authorized for account emails. Ask the administrator to add its domain in Firebase Authentication.";
     case "auth/invalid-api-key": case "auth/app-not-authorized": return "The Firebase connection needs to be checked by the administrator.";
-    case "auth/user-disabled": return "This account has been disabled. Contact the person managing QuoteFlow.";
+    case "auth/user-disabled": return "This account has been disabled. Contact the person managing Folio.";
     case "auth/too-many-requests": case "resource-exhausted": return "Too many requests. Please wait a little before trying again.";
     case "auth/network-request-failed": case "unavailable": case "deadline-exceeded": return "Cannot reach shared models. Check your connection and try again.";
     case "models/id-conflict": return "This model identifier already exists with different details. Close the form and try adding it again.";
