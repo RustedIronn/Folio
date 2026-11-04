@@ -8,7 +8,7 @@ import { catalogue, sampleQuotation } from "../scripts/pdf-test-support.mjs";
 import { createQuotation, resolveQuotationDocument, setTechnicalOverride } from "../src/models/quotation/quotation.js";
 import { ALTIS_QUOTATION_TEMPLATE as template } from "../src/templates/altisQuotationTemplate.js";
 
-async function component(file) {
+async function component(file, exportName = "default") {
   const result = await build({
     entryPoints: [fileURLToPath(new URL(file, import.meta.url))],
     bundle: true, write: false, platform: "node", format: "esm", jsx: "automatic",
@@ -17,7 +17,7 @@ async function component(file) {
       builder.onResolve({ filter: /^[^./]/ }, ({ path, kind }) => kind === "entry-point" ? undefined : { path: import.meta.resolve(path), external: true });
     } }],
   });
-  return (await import(`data:text/javascript;base64,${Buffer.from(result.outputFiles[0].text).toString("base64")}`)).default;
+  return (await import(`data:text/javascript;base64,${Buffer.from(result.outputFiles[0].text).toString("base64")}`))[exportName];
 }
 
 const ReviewStep = await component("../src/app/steps/ReviewStep.jsx");
@@ -129,4 +129,18 @@ test("customer sidebar summarizes actual addressing and project details without 
   assert.ok(html.includes('aria-label="Quotation subject"'));
   assert.ok(html.includes(workflow.resolved.pages.cover.subject));
   assert.ok(!html.includes("Not provided"));
+});
+
+const SelectControl = await component("../src/app/components/Select.jsx");
+const CatalogueControl = await component("../src/app/components/Select.jsx", "Combobox");
+
+test("dropdown wrappers expose labelled button actions and selected catalogue input", () => {
+  const options = [{value:"12", label:"Approved configuration"}];
+  const select = renderToStaticMarkup(React.createElement(SelectControl, {id:"test-select", value:"12", options, onChange:noop, "aria-label":"Lift category"}));
+  assert.match(select, /class="select-value"/);
+  assert.match(select, /aria-label="Lift category"/);
+  const combo = renderToStaticMarkup(React.createElement(CatalogueControl, {id:"test-combo", value:"12", options, selectedLabel:"Approved configuration", query:"", onQueryChange:noop, onChange:noop, "aria-label":"Configuration"}));
+  assert.match(combo, /<button(?=[^>]*class="combobox-toggle")(?=[^>]*aria-label="Show lift configurations")[^>]*/);
+  assert.match(combo, /value="Approved configuration"/);
+  assert.match(combo, /aria-expanded="false"/);
 });
