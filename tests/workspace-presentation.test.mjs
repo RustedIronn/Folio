@@ -144,3 +144,15 @@ test("dropdown wrappers expose labelled button actions and selected catalogue in
   assert.match(combo, /value="Approved configuration"/);
   assert.match(combo, /aria-expanded="false"/);
 });
+
+const DateControl = await component("../src/app/components/DatePicker.jsx");
+test("custom date control replaces native date widgets and preserves the selected date", () => {
+  const html = renderToStaticMarkup(React.createElement(DateControl, { id:"quotation-date", label:"Quotation date", value:"2026-11-04", onChange:noop, "aria-required":true }));
+  assert.match(html, /<button[^>]*id="quotation-date"/);
+  assert.ok(html.includes("04/11/2026"));
+  assert.ok(html.includes("Quotation date".toLowerCase()));
+  assert.ok(!html.includes('type="date"'));
+  assert.ok(!html.includes("<input"));
+  const empty = renderToStaticMarkup(React.createElement(DateControl, { id:"acceptance-date", label:"Acceptance date", value:"", onChange:noop }));
+  assert.ok(empty.includes("Select date"));
+});

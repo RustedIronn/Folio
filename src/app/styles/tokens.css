@@ -183,6 +183,9 @@
     --control-padding-y: var(--space-3);
     --control-gap: var(--space-2);
     --control-toggle-width: var(--control-height-compact);
+    --calendar-width: 22rem;
+    --calendar-day-size: var(--control-height-compact);
+    --calendar-day-gap: var(--border-thin);
     --control-font-size: var(--text-body);
     --control-background: var(--color-paper);
     --control-border: var(--border-thin) solid var(--color-field-border);
