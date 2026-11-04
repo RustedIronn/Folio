@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { focusScrollOffset, materialStatus, PAYMENT_LABELS, readinessMessage } from "../src/app/workflowPresentation.js";
+import { focusScrollOffset, technicalFieldLabel, materialStatus, PAYMENT_LABELS, readinessMessage } from "../src/app/workflowPresentation.js";
 
 test("focused fields stay above mobile actions and within the keyboard viewport", () => {
   const field = { top: 844, bottom: 887, height: 43 };
@@ -24,4 +24,11 @@ test("readiness prompts are actionable without replacing validation conditions",
   assert.equal(readinessMessage({ path: "lift.project.capacity", label: "Passenger count and maximum load must both be positive numbers" }), "Passenger count and maximum load must both be positive numbers");
   assert.equal(readinessMessage({ path: "metadata.date", label: "Quotation date" }), "Enter quotation date.");
   assert.deepEqual(PAYMENT_LABELS, { advance: "Advance", dispatch: "Before dispatch", completion: "On completion" });
+});
+
+test("technical field labels are employee-facing while field keys stay unchanged", () => {
+  assert.equal(technicalFieldLabel("powerSupplyMachineRoom"),"Machine-room power supply");
+  assert.equal(technicalFieldLabel("carProtectionDoor"),"Car door / protection");
+  assert.equal(technicalFieldLabel("autoRescueDeviceNote"),"Auto rescue device note");
+  assert.equal(technicalFieldLabel("futureSpecification"),"Future specification");
 });

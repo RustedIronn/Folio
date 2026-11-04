@@ -5,7 +5,7 @@ import { build } from "esbuild";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { catalogue, sampleQuotation } from "../scripts/pdf-test-support.mjs";
-import { createQuotation, resolveQuotationDocument } from "../src/models/quotation/quotation.js";
+import { createQuotation, resolveQuotationDocument, setTechnicalOverride } from "../src/models/quotation/quotation.js";
 import { ALTIS_QUOTATION_TEMPLATE as template } from "../src/templates/altisQuotationTemplate.js";
 
 async function component(file) {
@@ -21,6 +21,10 @@ async function component(file) {
 }
 
 const ReviewStep = await component("../src/app/steps/ReviewStep.jsx");
+const CustomerStep = await component("../src/app/steps/CustomerStep.jsx");
+const CommercialStep = await component("../src/app/steps/CommercialStep.jsx");
+const LiftStep = await component("../src/app/steps/LiftStep.jsx");
+const WorkspaceSummary = await component("../src/app/components/WorkspaceSummary.jsx");
 const CloudDraftsBar = await component("../src/app/components/CloudDraftsBar.jsx");
 const noop = () => {};
 function review(quotation, extra = {}) {
@@ -66,4 +70,63 @@ test("quiet guest storage presentation still surfaces local saving failures", ()
   const html = renderToStaticMarkup(React.createElement(CloudDraftsBar, { workflow: failed }));
   assert.ok(html.includes('role="alert"'));
   assert.ok(html.includes("This browser could not save a local copy"));
+});
+
+function entryWorkflow(quotation) {
+  return { quotation, catalogue, template, resolved: resolveQuotationDocument(quotation, catalogue, template),
+    update:noop, setQuotation:noop, errors:noop, suggestedYear:"2026-27", updatePayment:noop,
+    updateProject:noop, chooseConfiguration:noop, addSharedModel:noop,
+    employee:{authorized:false}, sharedEntryOptions:{records:[]}, sharedModels:{status:"signed-out"} };
+}
+test("customer folio retains saved addressing, custom subject and all reference controls", () => {
+  const quotation=sampleQuotation(); quotation.customer.salutation="M/s";
+  quotation.customer.subjectMode="custom"; quotation.customer.subjectCustom="Synthetic custom project subject";
+  const html=renderToStaticMarkup(React.createElement(CustomerStep,{workflow:entryWorkflow(quotation)}));
+  for(const id of ["reference-number","reference-office","reference-financial-year","quotation-date","customer-address","salutation","recipient-name","project-location","subject-mode","subject-custom"]) assert.ok(html.includes('id="'+id+'"'),id);
+  assert.ok(html.includes("Synthetic custom project subject"));
+  assert.ok(html.includes("Example Street"));
+  assert.ok(html.indexOf('id="recipient-name"')<html.indexOf('id="customer-address"'));
+});
+test("commercial editor and ivory summary display the same resolved quotation terms", () => {
+  const quotation=sampleQuotation(); quotation.commercial.priceAmount="750000";
+  quotation.commercial.packingForwarding="Synthetic packing adjustment";
+  const workflow=entryWorkflow(quotation);
+  const html=renderToStaticMarkup(React.createElement(CommercialStep,{workflow}));
+  assert.ok(html.includes('aria-label="Commercial summary"'));
+  assert.ok(html.includes(workflow.resolved.pages.priceSchedule.price.formatted));
+  assert.ok(html.includes("Synthetic packing adjustment"));
+  for(const key of ["advance","dispatch","completion"]) assert.ok(html.includes('id="payment-'+key+'"'));
+  assert.ok(html.includes(template.commercial.guarantee));
+});
+test("configuration summary uses effective overrides while retaining catalogue traceability", () => {
+  const quotation=setTechnicalOverride(sampleQuotation(),"motor","Synthetic motor adjustment",catalogue,template);
+  const workflow=entryWorkflow(quotation);
+  const html=renderToStaticMarkup(React.createElement(LiftStep,{workflow}));
+  assert.ok(html.includes('aria-label="Selected configuration summary"'));
+  assert.ok(html.includes("Synthetic motor adjustment"));
+  assert.ok(html.includes("#"+quotation.lift.catalogueId));
+  assert.ok(html.includes(workflow.resolved.pages.installation.project.capacity));
+  assert.ok(html.includes("Custom wording"));
+  assert.ok(html.includes("Advanced lift specification adjustments"));
+});
+
+test("review uses three cards while retaining all material rows and their edit action", () => {
+  const html=review(sampleQuotation());
+  assert.equal((html.match(/class="summary-group"/g)||[]).length,3);
+  assert.ok(html.includes("Lift &amp; materials"));
+  assert.ok(html.includes('aria-label="Edit materials"'));
+  assert.ok(html.includes("View all materials details"));
+  for(const row of template.materials) assert.ok(html.includes(row.label));
+  assert.ok(html.includes("35% / 55% / 10%"));
+});
+test("customer sidebar summarizes actual addressing and project details without placeholders", () => {
+  const workflow=entryWorkflow(sampleQuotation());
+  const html=renderToStaticMarkup(React.createElement(WorkspaceSummary,{workflow}));
+  assert.ok(html.includes("Customer information"));
+  assert.ok(html.includes("Example Street\nExample District\nExample City"));
+  assert.ok(html.includes("The project is located in"));
+  assert.ok(html.includes("<strong>"+workflow.resolved.pages.cover.attention+"</strong>"));
+  assert.ok(html.includes('aria-label="Quotation subject"'));
+  assert.ok(html.includes(workflow.resolved.pages.cover.subject));
+  assert.ok(!html.includes("Not provided"));
 });

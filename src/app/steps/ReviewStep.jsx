@@ -5,13 +5,15 @@ import Button from "../components/Button.jsx";
 import { readinessMessage } from "../workflowPresentation.js";
 
 const PdfPreview = lazy(() => import("../../pdf/PdfPreview.jsx"));
-function SummaryGroup({ title, rows, onEdit, highlights }) {
+function SummaryRows({ rows }) {
+  return <dl>{rows.filter(([, value]) => String(value ?? "").trim()).map(([label, value]) => <div key={label} className={label === "Quotation price" ? "summary-price" : undefined}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>;
+}
+function SummaryGroup({ title, rows, onEdit, highlights, children }) {
   const populated = rows.filter(([, value]) => String(value ?? "").trim());
-  if (!populated.length) return null;
+  if (!populated.length && !children) return null;
   const primary = highlights ? populated.filter(([label]) => highlights.includes(label)) : populated.slice(0, 3);
   const additional = populated.filter((row) => !primary.includes(row));
-  const renderRows = (entries) => <dl>{entries.map(([label, value]) => <div key={label} className={label === "Quotation price" ? "summary-price" : undefined}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>;
-  return <section className="summary-group"><div className="summary-heading"><h3>{title}</h3><Button variant="compact" aria-label={`Edit ${title}`} onClick={onEdit}>Edit</Button></div>{renderRows(primary)}{additional.length > 0 && <details className="summary-more"><summary>View all {title.toLowerCase()} details</summary>{renderRows(additional)}</details>}</section>;
+  return <section className="summary-group"><div className="summary-heading"><h3>{title}</h3><Button variant="compact" aria-label={`Edit ${title}`} onClick={onEdit}>Edit</Button></div><SummaryRows rows={primary} />{additional.length > 0 && <details className="summary-more"><summary>View all {title.toLowerCase()} details</summary><SummaryRows rows={additional} /></details>}{children}</section>;
 }
 function ReviewSummary({ documentData, onEdit }) {
   const { pages, provenance } = documentData;
@@ -19,9 +21,10 @@ function ReviewSummary({ documentData, onEdit }) {
   const price = pages.priceSchedule;
   return <div className="review-summary">
     <SummaryGroup title="Customer & reference" onEdit={() => onEdit("customer")} highlights={["Recipient", "Address", "Project location"]} rows={[["Reference", pages.cover.reference], ["Date", pages.cover.date], ["Recipient", pages.cover.attention], ["Address", pages.cover.customer.address], ["Subject", pages.cover.subject], ["Project location", price.projectLocation]]} />
-    <SummaryGroup title="Lift & installation" onEdit={() => onEdit("installation")} highlights={["Configuration", "Capacity", "Speed", "Floors", "Landings"]} rows={[["Configuration", installation.quantityAndType], ["Capacity", installation.project.capacity], ["Speed", installation.technical.speed], ["Travel height", installation.project.travelHeight], ["Floors", installation.project.floors], ["Landings", installation.project.landings], ["Shaft", installation.project.shaftMeasurement], ["Car size", installation.project.carSize], ["Cabin opening", installation.project.cabinOpening]]} />
-    <SummaryGroup title="Materials" onEdit={() => onEdit("materials")} rows={pages.materials.rows.map((row) => [row.label, row.value || (row.optional ? "Optional — not specified" : "Needs information")])} />
-    <SummaryGroup title="Price & commercial terms" onEdit={() => onEdit("commercial")} highlights={["Quotation price", "Tax treatment", "Delivery", ...price.payment.map((stage) => `Payment: ${stage.percentage}%`)]} rows={[["Quotation price", price.price.formatted], ["Amount in words", price.price.words], ["Tax treatment", price.taxDescription], ["Packing & forwarding", price.packingForwarding], ["Delivery", price.delivery], ["Transport / octroi", price.transportOctroi], ["Guarantee", price.guarantee], ...price.payment.map((stage) => [`Payment: ${stage.percentage}%`, stage.description])]} />
+    <SummaryGroup title="Lift & materials" onEdit={() => onEdit("installation")} highlights={["Configuration", "Capacity", "Floors"]} rows={[["Configuration", installation.quantityAndType], ["Capacity", installation.project.capacity], ["Speed", installation.technical.speed], ["Travel height", installation.project.travelHeight], ["Floors", installation.project.floors], ["Landings", installation.project.landings], ["Shaft", installation.project.shaftMeasurement], ["Car size", installation.project.carSize], ["Cabin opening", installation.project.cabinOpening]]}>
+      <details className="summary-more summary-materials"><summary>View all materials details</summary><SummaryRows rows={pages.materials.rows.map((row) => [row.label, row.value || (row.optional ? "Optional — not specified" : "Needs information")])} /><Button variant="compact" aria-label="Edit materials" onClick={() => onEdit("materials")}>Edit materials</Button></details>
+    </SummaryGroup>
+    <SummaryGroup title="Price & commercial terms" onEdit={() => onEdit("commercial")} highlights={["Quotation price", "Tax treatment", "Delivery", "Payment schedule"]} rows={[["Quotation price", price.price.formatted], ["Amount in words", price.price.words], ["Tax treatment", price.taxDescription], ["Packing & forwarding", price.packingForwarding], ["Delivery", price.delivery], ["Transport / octroi", price.transportOctroi], ["Guarantee", price.guarantee], ["Payment schedule", price.payment.map((stage) => stage.percentage + "%").join(" / ")], ...price.payment.map((stage) => [`Payment: ${stage.percentage}%`, stage.description])]} />
     <p className="review-trace">{provenance.configurationOrigin === "shared" ? "Selected lift: team-added model. Its specifications are saved with this quotation." : `Selected lift: configuration #${provenance.catalogueId || "not selected"}${provenance.catalogueSourceRow ? `, workbook row ${provenance.catalogueSourceRow}` : ""}.`}</p>
   </div>;
 }

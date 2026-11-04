@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Boxes, Building2, Check, FileCheck2, FileText, IndianRupee, RotateCcw, UserRound } from "lucide-react";
+import { Check, FileText, RotateCcw } from "lucide-react";
 import CustomerStep from "./steps/CustomerStep.jsx";
 import LiftStep from "./steps/LiftStep.jsx";
 import MaterialsStep from "./steps/MaterialsStep.jsx";
@@ -17,14 +17,7 @@ import { useQuotationWorkflow } from "./hooks/useQuotationWorkflow.js";
 import "./App.css";
 
 const STEPS = { customer: CustomerStep, installation: LiftStep, materials: MaterialsStep, commercial: CommercialStep, review: ReviewStep };
-const ICONS = { customer: UserRound, installation: Building2, materials: Boxes, commercial: IndianRupee, review: FileCheck2 };
-const COPY = {
-  customer: ["Customer information", "Enter the quotation reference, recipient, and project details."],
-  installation: ["Lift & installation", "Select a configuration and enter the installation specifications."],
-  materials: ["Materials", "Review the material schedule and adjust specifications where needed."],
-  commercial: ["Commercial terms", "Enter the price and confirm delivery, taxes, and payment terms."],
-  review: ["Review & PDF", "Check the quotation details, preview the document, and download when ready."]
-};
+const TITLES = { customer: ["Customer", "& project"], installation: ["Lift &", "installation"], materials: ["Material", "schedule"], commercial: ["Commercial", "terms"], review: ["Review", "& PDF"] };
 const stateLabel = (state) => ({ complete: "Complete", ready: "Ready", available: "Available", incomplete: "Needs attention", "in-progress": "In progress", current: "Editing", "not-started": "Not started" })[state];
 
 export default function App() {
@@ -32,16 +25,15 @@ export default function App() {
   const [showReset, setShowReset] = useState(false);
   const { currentStep, currentStepIndex, workflowProgress, overallProgress, reference, saveStatus, pendingConfiguration } = workflow;
   const current = workflowProgress[currentStepIndex];
-  return <main className={`product-shell screen-${currentStep}`}>
+  return <div className={`product-shell screen-${currentStep}`}><a className="skip-link" href="#workspace">Skip to quotation workspace</a>
     <aside className="product-rail">
-      <a className="product-brand" href="#customer" onClick={(event) => { event.preventDefault(); workflow.visitStep("customer"); }} aria-label="Altis QuoteFlow home"><img src="/assets/altis-emblem.png" alt="Altis Elevators" /></a>
+      <a className="product-brand" href="#customer" onClick={(event) => { event.preventDefault(); workflow.visitStep("customer"); }} aria-label="Altis QuoteFlow home"><img src="/assets/altis-emblem.png" alt="" /><span>ALTIS<small>ELEVATORS</small></span></a>
       <div className="rail-caption">WORKSPACE</div>
       <div className="rail-project"><FileText size={19} /><div><strong>QuoteFlow</strong><span>Quotation builder</span></div><span className="rail-project-dot" /></div>
       <div className="rail-divider" />
       <div className="rail-caption">THIS QUOTATION</div>
-      <nav className="rail-navigation" aria-label="Quotation sections">{workflowProgress.map((step) => {
-        const Icon = ICONS[step.id];
-        return <button type="button" key={step.id} aria-current={step.id === currentStep ? "step" : undefined} aria-label={`${step.label}. ${stateLabel(step.state)}${step.required ? `. ${step.completed} of ${step.required} ready` : ""}`} onClick={() => workflow.visitStep(step.id)}><Icon size={17} aria-hidden="true" /><span><strong>{step.label}</strong><small>{step.required ? `${step.completed}/${step.required} ready` : stateLabel(step.state)}</small></span>{step.state === "complete" && <Check size={14} aria-label="Complete" />}</button>;
+      <nav className="rail-navigation" aria-label="Quotation sections">{workflowProgress.map((step, index) => {
+        return <button type="button" key={step.id} aria-current={step.id === currentStep ? "step" : undefined} aria-label={`${step.label}. ${stateLabel(step.state)}${step.required ? `. ${step.completed} of ${step.required} ready` : ""}`} onClick={() => workflow.visitStep(step.id)}><span className="rail-step-index" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span><span><strong>{step.label}</strong><small>{step.required ? `${step.completed}/${step.required} ready` : stateLabel(step.state)}</small></span>{step.state === "complete" && <Check size={14} aria-label="Complete" />}</button>;
       })}</nav>
       <div className="rail-bottom">
         <div className="rail-completion"><div><span>Required details ready</span><strong>{overallProgress.percent}%</strong></div><progress max="100" value={overallProgress.percent} aria-label="Required details ready, including Altis standards" /><small>{overallProgress.completed} of {overallProgress.required} ready · includes standards</small></div>
@@ -49,10 +41,10 @@ export default function App() {
         <div className="rail-business"><span>AE</span><div><strong>Altis Elevators</strong><small>Quotation workspace</small></div></div>
       </div>
     </aside>
-    <div className="product-body">
-      <header className="product-topbar"><div className="topbar-reference"><strong>{reference || "New quotation"}</strong><span className="topbar-draft">{workflow.documentAccess.canDownload ? "Ready" : workflow.exportReady ? "Details complete" : "Draft"}</span></div><div className="topbar-actions"><div className={`draft-save save-status-${saveStatus}`} role="status"><span aria-hidden="true" />{draftSaveLabel(workflow.drafts)}</div><AccountControls workflow={workflow} /></div></header>
+    <main className="product-body" id="workspace">
+      <header className="product-topbar"><div className="topbar-context"><span className="workspace-breadcrumb">Workspace / {current.label}</span><span className="topbar-draft">{workflow.documentAccess.canDownload ? "Ready" : workflow.exportReady ? "Details complete" : "Draft"}</span></div><div className="topbar-reference"><strong>{reference || "New quotation"}</strong></div><div className="topbar-actions"><div className={`draft-save save-status-${saveStatus}`} role="status"><span aria-hidden="true" />{draftSaveLabel(workflow.drafts)}</div><AccountControls workflow={workflow} /></div></header>
       <div className="product-page">
-        <header className="page-intro"><div><h1>{COPY[currentStep][0]}</h1><p>{COPY[currentStep][1]}</p></div>{currentStep !== "review" && <p className="field-legend"><span aria-hidden="true">*</span> Required fields</p>}</header>
+        <header className="page-intro"><div><span className="page-eyebrow">{String(currentStepIndex + 1).padStart(2, "0")} / QUOTATION WORKSPACE</span><h1>{TITLES[currentStep][0]} <em>{TITLES[currentStep][1]}.</em></h1></div>{currentStep !== "review" && <p className="field-legend"><span aria-hidden="true">*</span> Required fields</p>}</header>
         <CloudDraftsBar workflow={workflow} />
         <nav className="journey" aria-label="Quotation workflow">{workflowProgress.map((step, index) => <button key={step.id} type="button" className={`journey-step state-${step.state}`} aria-current={step.id === currentStep ? "step" : undefined} aria-label={`Step ${index + 1}: ${step.label}. ${stateLabel(step.state)}`} onClick={() => workflow.visitStep(step.id)}><span className="journey-number">{step.state === "complete" ? <Check size={15} /> : index + 1}</span><span><strong>{step.label}</strong><small>{step.required ? `${step.completed}/${step.required} ready` : stateLabel(step.state)}</small></span></button>)}</nav>
         <p className="mobile-current-step">Step {currentStepIndex + 1} of 5 · {current.label}</p>
@@ -62,9 +54,9 @@ export default function App() {
         </div>
         <footer className="product-footer"><span>ALTIS ELEVATORS</span><p>Quotation workspace</p><span>QuoteFlow</span></footer>
       </div>
-    </div>
+    </main>
     {pendingConfiguration && <ConfirmationDialog title="Replace configuration?" description={`Switching changes selected-lift values. ${pendingConfiguration.impact.overrideCount ? `Choose whether to keep ${pendingConfiguration.impact.overrideCount} customization(s).` : "Continue only if intended."}`} onDismiss={() => workflow.setPendingConfiguration(null)}><Button variant="tertiary" autoFocus onClick={() => workflow.setPendingConfiguration(null)}>Cancel</Button>{pendingConfiguration.impact.overrideCount > 0 && <Button variant="secondary" onClick={() => workflow.confirmConfiguration(true)}>Keep customizations</Button>}<Button onClick={() => workflow.confirmConfiguration(false)}>Use selected-lift values</Button></ConfirmationDialog>}
     {showReset && <ConfirmationDialog title="Reset quotation?" description={workflow.employee.user ? "Start a new quotation. Existing cloud drafts and local employee copies will be kept in Saved quotations." : "Clear the current guest quotation and start again. This cannot be undone."} onDismiss={() => setShowReset(false)}><Button variant="secondary" autoFocus onClick={() => setShowReset(false)}>Cancel</Button><Button variant="danger" onClick={() => { workflow.resetDraft(); setShowReset(false); }}>Reset quotation</Button></ConfirmationDialog>}
     {workflow.authIntent && <AccountDialog session={workflow.employee} onDismiss={() => workflow.setAuthIntent(null)} onDone={workflow.completeSignIn} />}
-  </main>;
+  </div>;
 }

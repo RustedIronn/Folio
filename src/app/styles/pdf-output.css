@@ -1,8 +1,5 @@
-.pdf-output { min-width: 0; }
-.pdf-version-control { display: grid; grid-template-columns: auto minmax(160px, 210px) minmax(0, 1fr); align-items: center; gap: 12px; margin-bottom: 14px; }
-.pdf-version-control > label { color: #173b27; font-size: 13px; font-weight: 600; }
-.pdf-version-control > p { margin: 0; color: #627064; font-size: 12px; line-height: 1.5; }
-@media (max-width: 700px) {
-  .pdf-version-control { grid-template-columns: auto minmax(0, 1fr); gap: 8px 12px; }
-  .pdf-version-control > p { grid-column: 1 / -1; }
-}
+.pdf-output { min-width:0; }
+.pdf-version-control { display:grid; grid-template-columns:auto minmax(10rem,13rem) minmax(0,1fr); align-items:center; gap:var(--space-3); margin-bottom:var(--space-5); }
+.pdf-version-control>label { color:var(--color-accent); font-size:var(--text-label); font-weight:var(--weight-medium); }
+.pdf-version-control>p { color:var(--color-muted); font-size:var(--text-caption); }
+@media(max-width:48rem) { .pdf-version-control { grid-template-columns:auto minmax(0,1fr); }.pdf-version-control>p { grid-column:1/-1; } }

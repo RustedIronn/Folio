@@ -23,7 +23,7 @@ export default function MaterialsStep({ workflow }) {
   }
   const editingRow = rows.find((row) => row.key === editingMaterial);
   return <div className="materials-workspace">
-    <section className="materials-hero"><div><h3>{rows.length} material specifications</h3><p>From your selected lift and Altis standards.</p></div><div className="materials-heading-actions"><div className="materials-hero-count"><strong>{complete}/{requiredRows.length}</strong><span>required ready</span></div><Button variant="secondary" onClick={() => setAddingMaterial(true)}><Plus size={15} aria-hidden="true" />Add material</Button></div></section>
+    <section className="materials-hero"><div><h3>{rows.length} material specifications</h3></div><div className="materials-heading-actions"><div className="materials-hero-count"><strong>{complete}/{requiredRows.length}</strong><span>required ready</span></div><Button variant="secondary" onClick={() => setAddingMaterial(true)}><Plus size={15} aria-hidden="true" />Add material</Button></div></section>
     {feedback && <p className="shared-model-feedback" role="status">{feedback}</p>}
     {employee.authorized && <div className="team-options-toolbar"><span role="status">{sharedEntryOptions.error || (sharedEntryOptions.loading ? "Loading team options…" : "Team material options available in the specification choices.")}</span><Button variant="tertiary" onClick={sharedEntryOptions.refresh} disabled={sharedEntryOptions.loading}>Refresh team options</Button></div>}
     <section className="materials-table" aria-label="Materials used by Altis Elevators"><div className="materials-table-head"><span>Material</span><span>Specification</span><span>Action</span></div>

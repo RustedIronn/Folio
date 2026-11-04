@@ -1,29 +1,255 @@
-:root {
-  --font-ui: Inter, ui-sans-serif, system-ui, sans-serif;
-  --font-editorial: Iowan Old Style, Baskerville, Georgia, serif;
-  --ink-strong: #17211b;
-  --ink: #202722;
-  --muted: #687169;
-  --forest: #103b2b;
-  --forest-deep: #08291e;
-  --forest-soft: #dfeae2;
-  --porcelain: #f5f1e9;
-  --paper: #fffdf8;
-  --line: #d9d5ca;
-  --gold: #aa8743;
-  --gold-soft: #ebe1c5;
-  --error: #a94d43;
-  --danger-soft: #f8e7e2;
-  --focus: #b78b45;
-  --space-1: 4px;
-  --space-2: 8px;
-  --space-3: 12px;
-  --space-4: 16px;
-  --space-5: 24px;
-  --space-6: 32px;
-  --radius-control: 6px;
-  --radius-surface: 10px;
-  --control-compact: 36px;
-  --control: 44px;
-  --control-emphasis: 52px;
+/* Palette revision: ivory chroma +25%, greens/accents +12.5% in OKLab;
+   perceptual lightness held before sRGB gamut clipping. No saturation filter.
+   Palette → semantic roles → component dimensions.
+   Breakpoints are literal 48rem / 76rem / 100rem: CSS variables do not
+   work inside media-query conditions. Component widths remain fluid. */
+@layer tokens {
+  :root {
+    --forest-950: #0b3027;
+    --forest-900: #0e3c30;
+    --forest-800: #1e4d3c;
+    --forest-700: #2f5d3e;
+    --ivory-50: #fffef8;
+    --ivory-100: #f6f3e9;
+    --ivory-200: #e8dfca;
+    --ivory-300: #ded1b5;
+    --ivory-500: #9c8963;
+    --sage-100: #edf0e4;
+    --sage-200: #e0e7d3;
+    --sage-300: #c2ceb7;
+    --sage-400: #a5b594;
+    --sage-500: #7e8e73;
+    --sage-600: #576a4d;
+    --charcoal: #203c32;
+    --gold-600: #88661a;
+    --rust-700: #984229;
+    --white: #ffffff;
+
+    --color-canvas: var(--ivory-100);
+    --color-paper: var(--ivory-50);
+    --color-group: var(--sage-100);
+    --color-group-strong: var(--sage-200);
+    --color-ink: var(--charcoal);
+    --color-muted: var(--sage-600);
+    --color-accent: var(--forest-900);
+    --color-on-accent: var(--ivory-50);
+    --color-line: var(--sage-300);
+    --color-field-border: var(--sage-500);
+    --color-hover: var(--sage-100);
+    --color-selected: var(--sage-200);
+    --color-focus: var(--forest-700);
+    --color-required: var(--gold-600);
+    --color-error: var(--rust-700);
+    --color-rail-text: #edf0dd;
+    --color-rail-muted: #bfcfbb;
+    --color-rail-line: #ffffff26;
+    --color-rail-active: #ffffff0d;
+    --color-watermark: #3e623807;
+
+    --font-ui: var(--font-interface);
+    --forest: var(--color-accent);
+    --forest-deep: var(--forest-950);
+    --forest-soft: var(--color-group-strong);
+    --ink-strong: var(--color-ink);
+    --ink: var(--color-ink);
+    --muted: var(--color-muted);
+    --paper: var(--color-paper);
+    --line: var(--color-line);
+    --error: var(--color-error);
+    --radius-surface: var(--radius-panel);
+    --font-interface: 'DM Sans', sans-serif;
+    --font-editorial: 'Instrument Serif', Georgia, serif;
+    --font-notation: 'IBM Plex Mono', monospace;
+    --text-micro: .625rem;
+    --text-caption: .75rem;
+    --text-label: .8125rem;
+    --text-body: .9375rem;
+    --text-input-mobile: 1rem;
+    --text-subheading: 1.125rem;
+    --text-section: 1.75rem;
+    --text-title: 4rem;
+    --text-title-mobile: 3rem;
+    --text-price: 3.5rem;
+    --text-price-mobile: 2.75rem;
+    --weight-regular: 400;
+    --weight-medium: 500;
+    --weight-semibold: 600;
+    --leading-tight: 1.05;
+    --leading-label: 1.4;
+    --leading-body: 1.65;
+    --tracking-annotation: .12em;
+    --tracking-title: -.025em;
+
+    --space-0: 0;
+    --space-1: .25rem;
+    --space-2: .5rem;
+    --space-3: .75rem;
+    --space-4: 1rem;
+    --space-5: 1.25rem;
+    --space-6: 1.5rem;
+    --space-7: 2rem;
+    --space-8: 2.5rem;
+    --space-9: 3rem;
+    --space-10: 4rem;
+
+    --border-thin: 1px;
+    --border-strong: 2px;
+    --border-marker: 3px;
+    --radius-control: .25rem;
+    --radius-panel: .375rem;
+    --radius-round: 50%;
+    --focus-width: 2px;
+    --focus-offset: 2px;
+    --shadow-focus: 0 0 0 4px #557a4526;
+    --shadow-popup: 0 12px 32px #142f1f26;
+    --shadow-folio: 4px 4px 0 #d8e1cd;
+    --shadow-document: 4px 4px 0 #c5d2b7;
+    --shadow-toast: 0 8px 25px #0b302726;
+    --shadow-panel-raised: 0 12px 28px #0b30270a, inset 0 1px 0 #ffffff;
+    --opacity-disabled: .45;
+    --duration-fast: 140ms;
+    --duration-enter: 220ms;
+    --ease-standard: cubic-bezier(.2,.7,.2,1);
+    --z-navigation: 40;
+    --z-modal-backdrop: 200;
+    --z-modal: 201;
+    --z-modal-popup: 202;
+    --z-dock: 50;
+    --z-popup: 100;
+    --z-toast: 200;
+
+    /* Opaque fallback first. Never apply opacity or blur to readable content. */
+    --glass-fallback: var(--ivory-50);
+    --glass-surface: #fffef8f2;
+    --glass-navigation: #f6f3e9ed;
+    --glass-border: #b5c5a3;
+    --glass-blur: 18px;
+    --glass-saturation: 110%;
+    --glass-modal-backdrop: #0b302773;
+    --glass-modal-blur: 4px;
+
+    --rail-width: 12.625rem;
+    --rail-padding: var(--space-6);
+    --workspace-max: 118rem;
+    --workspace-gutter: var(--space-8);
+    --workspace-header-height: 4.75rem;
+    --workspace-header-columns: minmax(0,1fr) auto minmax(0,1fr);
+    --review-summary-columns: 3;
+    --workspace-gap: var(--space-8);
+    --summary-width: 14rem;
+    --commercial-summary-width: 17rem;
+    --layout-gap: var(--space-6);
+    --mobile-header-height: 4.25rem;
+    --mobile-dock-height: 5rem;
+
+    /* Panels and group geometry: consistent padding, responsive width. */
+    --panel-padding: var(--space-6);
+    --panel-padding-compact: var(--space-4);
+    --panel-padding-document: var(--space-7);
+    --panel-gap: var(--space-6);
+    --peer-card-alignment: stretch;
+    --summary-flow-height: 6rem;
+    --summary-flow-dot-size: var(--space-2);
+    --summary-flow-line: var(--sage-400);
+    --summary-flow-marker: var(--sage-500);
+    --panel-border: var(--border-thin) solid var(--color-line);
+    --panel-raised-background: var(--glass-surface);
+    --panel-raised-border: var(--border-thin) solid var(--sage-400);
+    --panel-raised-shadow: var(--shadow-panel-raised);
+    --disclosure-background: color-mix(in srgb, var(--ivory-100) 70%, var(--ivory-200));
+    --disclosure-background-hover: color-mix(in srgb, var(--ivory-100) 40%, var(--ivory-200));
+    --disclosure-border: color-mix(in srgb, var(--ivory-100) 65%, var(--ivory-500));
+    --disclosure-marker: var(--sage-500);
+    --disclosure-header-height: 3.5rem;
+    --disclosure-indicator-size: 2rem;
+    --disclosure-indicator-background: transparent;
+    --disclosure-indicator-color: var(--color-accent);
+    --disclosure-indicator-border: var(--sage-400);
+    --disclosure-padding: var(--space-3);
+    --disclosure-title-size: var(--text-body);
+    --disclosure-title-weight: var(--weight-medium);
+    --summary-card-width: calc(var(--summary-width) + 2 * var(--panel-padding));
+    --summary-id-size: 3rem;
+    --group-marker-width: var(--border-marker);
+    --measurement-min-width: 12rem;
+    --form-gap-x: var(--space-6);
+    --form-gap-y: var(--space-5);
+    --recipient-salutation-width: 6.5rem;
+    --address-width-max: 32rem;
+
+    --control-height: 3rem;
+    --control-height-compact: 2.75rem;
+    --control-padding-x: var(--space-3);
+    --control-padding-y: var(--space-3);
+    --control-gap: var(--space-2);
+    --control-toggle-width: var(--control-height-compact);
+    --control-font-size: var(--text-body);
+    --control-background: var(--color-paper);
+    --control-border: var(--border-thin) solid var(--color-field-border);
+    --control-border-hover: var(--forest-700);
+    --control-background-focus: var(--white);
+    --textarea-min-height: 6rem;
+    --textarea-padding: var(--space-3);
+    --textarea-scrollbar-thumb: var(--sage-400);
+    --textarea-scrollbar-track: var(--color-group);
+    --textarea-resize-mark: var(--sage-500);
+    --numeric-suffix-padding: var(--space-3);
+
+    --button-height: var(--control-height);
+    --button-height-compact: var(--control-height-compact);
+    --button-padding-x: var(--space-4);
+    --button-gap: var(--space-2);
+    --button-icon-size: 1.125rem;
+    --button-font-size: var(--text-label);
+    --button-primary-hover: var(--forest-800);
+    --button-primary-pressed: var(--forest-950);
+    --segment-height: var(--control-height-compact);
+    --segment-padding-x: var(--space-3);
+    --segment-inset: var(--space-1);
+
+    --popup-width-min: 11rem;
+    --popup-max-height: 21rem;
+    --popup-viewport-gutter: var(--space-4);
+    --popup-offset: var(--space-2);
+    --popup-padding: var(--space-1);
+    --popup-option-height: var(--control-height);
+    --popup-option-padding-x: var(--space-3);
+    --popup-option-padding-y: var(--space-3);
+    --popup-option-gap: var(--space-3);
+    --popup-option-radius: var(--radius-control);
+    --popup-option-id-width: 2.25rem;
+    --popup-option-meta-size: var(--text-caption);
+    --popup-option-hover: var(--color-hover);
+    --popup-option-selected: var(--color-selected);
+    --popup-option-focus: var(--color-focus);
+
+    --nav-row-height: 3.5rem;
+    --nav-index-width: 1.25rem;
+    --nav-mobile-target: 2.75rem;
+    --schedule-index-width: 2rem;
+    --schedule-label-width: 11rem;
+    --schedule-action-width: 6rem;
+    --schedule-row-padding: var(--space-5);
+    --config-category-width: 11rem;
+    --payment-percent-width: 5.5rem;
+    --document-page-width: 26.25rem;
+    --document-page-ratio: 612 / 792;
+    --document-page-padding: var(--space-7);
+    --document-spread-gap: var(--space-8);
+    --document-page-index-size: var(--control-height-compact);
+    --dialog-width: 35rem;
+    --dialog-padding: var(--space-7);
+    --toast-width: 32rem;
+
+  }
+  @media(max-width:76rem) {
+    :root { --rail-width:11.25rem; --workspace-gutter:var(--space-6); --workspace-gap:var(--space-6); --commercial-summary-width:14rem; --schedule-label-width:9rem; }
+  }
+  @media(max-width:48rem) {
+    :root { --rail-width:0rem; --workspace-gutter:var(--space-5); --workspace-gap:var(--space-5); --text-title:var(--text-title-mobile); --text-price:var(--text-price-mobile); --control-font-size:var(--text-input-mobile); --form-gap-x:var(--space-4); --panel-padding:var(--space-5); --panel-padding-document:var(--space-5); --document-page-padding:var(--space-6); --popup-max-height:19rem; --recipient-salutation-width:6rem; --payment-percent-width:5rem; }
+  }
+  @media(prefers-reduced-motion:reduce) { :root { --duration-fast:0ms; --duration-enter:0ms; } }
+  @media(prefers-reduced-transparency:reduce) {
+    :root { --glass-surface:var(--glass-fallback); --glass-navigation:var(--glass-fallback); --glass-blur:0px; --glass-modal-blur:0px; }
+  }
 }

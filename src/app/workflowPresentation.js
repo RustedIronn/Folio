@@ -1,3 +1,14 @@
+const TECHNICAL_LABELS = {
+  liftType: "Lift category", speed: "Speed", doorFrame: "Door frame",
+  carProtectionDoor: "Car door / protection", landingProtection: "Landing door / protection",
+  motor: "Motor", controller: "Control panel", rope: "Rope", autoRescueDeviceNote: "Auto rescue device note",
+  powerSupplyMachineRoom: "Machine-room power supply", powerSupplyLiftWell: "Lift-well power supply",
+  safety: "Safety features", facePlate: "Face plate",
+};
+export function technicalFieldLabel(key) {
+  return TECHNICAL_LABELS[key] ?? String(key).replace(/([a-z])([A-Z])/g, "$1 $2").toLowerCase().replace(/^./, (letter) => letter.toUpperCase());
+}
+
 export const PAYMENT_LABELS = { advance: "Advance", dispatch: "Before dispatch", completion: "On completion" };
 
 export function readinessMessage(entry) {
