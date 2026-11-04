@@ -1,0 +1,48 @@
+/* Quotation navigator: fixed desktop rail, compact branding on mobile. */
+.product-rail { position:fixed; inset:0 auto 0 0; width:var(--rail-width); padding:var(--space-7) var(--rail-padding) var(--space-4); display:flex; flex-direction:column; overflow-y:auto; overscroll-behavior:contain; scrollbar-width:thin; scrollbar-color:var(--color-rail-line) transparent; background:var(--color-accent); color:var(--color-rail-text); z-index:var(--z-navigation); }
+.product-brand { display:flex; flex-shrink:0; align-items:center; gap:var(--space-2); text-decoration:none; color:var(--color-rail-text); }
+.product-brand img { width:var(--space-8); height:var(--space-8); object-fit:contain; }
+.product-brand>span { font:var(--text-section) Georgia,serif; letter-spacing:var(--tracking-annotation); }
+.product-brand small { display:block; font:var(--text-micro) var(--font-interface); letter-spacing:var(--tracking-annotation); margin-top:var(--space-1); }
+.rail-project { display:flex; flex-shrink:0; margin-top:var(--space-5); padding-bottom:var(--space-5); border-bottom:var(--border-thin) solid var(--color-rail-line); }
+.rail-project div { display:grid; gap:var(--space-1); }
+.rail-project strong { font:var(--text-section)/var(--leading-tight) var(--font-editorial); }
+.rail-project div>span { font-size:var(--text-caption); color:var(--color-rail-muted); }
+.rail-caption { margin:var(--space-5) var(--space-3) var(--space-2); color:var(--color-rail-muted); font-size:var(--text-micro); font-weight:var(--weight-medium); letter-spacing:var(--tracking-annotation); text-transform:uppercase; }
+.rail-navigation { display:grid; flex-shrink:0; gap:var(--space-1); }
+.rail-navigation button { position:relative; display:grid; grid-template-columns:var(--rail-marker-size) minmax(0,1fr); align-items:center; gap:var(--space-3); width:100%; min-height:var(--rail-step-height); padding:var(--space-3); border:var(--border-thin) solid transparent; border-radius:var(--radius-control); background:transparent; color:var(--color-rail-muted); text-align:left; }
+.rail-navigation button:hover { background:var(--rail-hover-background); color:var(--color-on-accent); }
+.rail-navigation button[aria-current] { border-color:var(--color-rail-line); background:var(--rail-active-background); color:var(--color-on-accent); }
+.rail-navigation button[aria-current]::before { content:''; position:absolute; inset-block:var(--space-3); left:calc(-1 * var(--border-thin)); width:var(--border-marker); border-radius:var(--radius-control); background:var(--ivory-200); }
+.rail-navigation button:not(.rail-review-step):not(:nth-last-child(2))::after { content:''; position:absolute; left:calc(var(--space-3) + var(--rail-marker-size) / 2); top:calc(50% + var(--rail-marker-size) / 2 + var(--space-1)); width:var(--border-thin); height:calc(100% - var(--rail-marker-size) - var(--space-1)); background:var(--color-rail-line); pointer-events:none; }
+.rail-step-index { position:relative; z-index:1; display:grid; place-items:center; width:var(--rail-marker-size); height:var(--rail-marker-size); border:var(--border-thin) solid var(--color-rail-line); border-radius:var(--radius-control); background:var(--color-accent); font:var(--text-caption) var(--font-notation); color:var(--color-rail-muted); }
+.rail-navigation button[aria-current] .rail-step-index { background:var(--ivory-200); border-color:var(--ivory-200); color:var(--forest-950); }
+.rail-step-copy { display:grid; min-width:0; gap:var(--space-1); }
+.rail-step-copy strong { font-size:var(--text-label); font-weight:var(--weight-medium); line-height:var(--leading-label); }
+.rail-step-copy small { display:flex; align-items:center; gap:var(--space-1); font-size:var(--text-caption); line-height:var(--leading-label); color:var(--color-rail-muted); }
+.rail-navigation .state-not-started:not([aria-current]) .rail-step-copy small { color:var(--color-rail-quiet); }
+.rail-navigation .state-incomplete .rail-step-copy small { color:var(--rail-attention-color); }
+.rail-navigation .rail-review-step { margin-top:var(--space-3); border-top-color:var(--color-rail-line); border-top-left-radius:0; border-top-right-radius:0; padding-right:var(--space-8); }
+.rail-review-icon { position:absolute; right:var(--space-3); color:var(--color-rail-muted); }
+.rail-bottom { margin-top:auto; padding-top:var(--space-6); }
+.rail-completion { padding-top:var(--space-5); border-top:var(--border-thin) solid var(--color-rail-line); }
+.rail-completion>div { display:flex; align-items:center; justify-content:space-between; gap:var(--space-2); font-size:var(--text-caption); color:var(--color-rail-text); }
+.rail-completion>div strong { font:var(--text-caption) var(--font-notation); }
+.rail-completion small { display:block; font-size:var(--text-caption); color:var(--color-rail-muted); line-height:var(--leading-label); }
+.rail-completion progress { appearance:none; width:100%; height:var(--rail-progress-height); display:block; margin:var(--space-3) 0; border:0; border-radius:var(--radius-control); overflow:hidden; background:var(--color-rail-line); }
+.rail-completion progress::-webkit-progress-bar { background:var(--color-rail-line); }
+.rail-completion progress::-webkit-progress-value { background:var(--ivory-200); }
+.rail-completion progress::-moz-progress-bar { background:var(--ivory-200); }
+.rail-save { display:flex; align-items:flex-start; gap:var(--space-2); margin-top:var(--space-5); color:var(--color-rail-muted); }
+.rail-save>svg { margin-top:var(--space-1); }
+.rail-save>div { display:grid; gap:var(--space-1); min-width:0; }
+.rail-save strong { font-size:var(--text-caption); color:var(--color-rail-text); font-weight:var(--weight-medium); }
+.rail-save span { font-size:var(--text-caption); line-height:var(--leading-label); }
+.rail-save.save-status-unable>svg,.rail-save.save-status-local>svg { color:var(--rail-attention-color); }
+.rail-save-spinner { animation:spin .9s linear infinite; }
+.rail-reset.button { justify-content:flex-start; min-height:var(--control-height-compact); color:var(--color-rail-muted); font-size:var(--text-caption); padding-inline:0; margin-top:var(--space-2); }
+.rail-reset.button:hover { color:var(--color-on-accent); background:transparent; }
+.product-rail :is(button,a):focus-visible { outline:var(--focus-width) solid var(--ivory-200); outline-offset:var(--focus-offset); }
+@media(min-width:48.001rem) { .topbar-actions>.draft-save { display:none; } }
+@media(max-width:48rem) { .rail-caption { display:none; } .product-rail { overflow:visible; } }
+@media(prefers-reduced-motion:reduce) { .rail-save-spinner { animation:none; } }

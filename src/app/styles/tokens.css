@@ -128,8 +128,15 @@
     --glass-modal-backdrop: #0b302773;
     --glass-modal-blur: 4px;
 
-    --rail-width: 12.625rem;
-    --rail-padding: var(--space-6);
+    --rail-width: 14.75rem;
+    --rail-padding: var(--space-5);
+    --rail-marker-size: 1.75rem;
+    --rail-step-height: 4.25rem;
+    --rail-progress-height: 3px;
+    --rail-active-background: #ffffff12;
+    --rail-hover-background: #ffffff08;
+    --rail-attention-color: var(--ivory-300);
+    --color-rail-quiet: #a5bba2;
     --workspace-max: 118rem;
     --workspace-gutter: var(--space-8);
     --workspace-header-height: 4.75rem;

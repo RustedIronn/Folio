@@ -61,3 +61,11 @@ export function focusWorkflowField(id) {
   target.scrollIntoView({ behavior: "instant", block: "center" });
   keepWorkflowFocusVisible();
 }
+
+export function sidebarStepDetail(step) {
+  if (!step.required) return step.state === "ready" ? "Ready to review" : "Available";
+  const remaining = Math.max(0, step.required - step.completed);
+  if (!remaining) return "Complete";
+  if (step.state === "not-started") return "Not started";
+  return `${remaining} ${remaining === 1 ? "detail" : "details"} remaining`;
+}

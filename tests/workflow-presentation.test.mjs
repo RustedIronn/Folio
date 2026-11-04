@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { focusScrollOffset, technicalFieldLabel, materialStatus, PAYMENT_LABELS, readinessMessage } from "../src/app/workflowPresentation.js";
+import { sidebarStepDetail, focusScrollOffset, technicalFieldLabel, materialStatus, PAYMENT_LABELS, readinessMessage } from "../src/app/workflowPresentation.js";
 
 test("focused fields stay above mobile actions and within the keyboard viewport", () => {
   const field = { top: 844, bottom: 887, height: 43 };
@@ -31,4 +31,13 @@ test("technical field labels are employee-facing while field keys stay unchanged
   assert.equal(technicalFieldLabel("carProtectionDoor"),"Car door / protection");
   assert.equal(technicalFieldLabel("autoRescueDeviceNote"),"Auto rescue device note");
   assert.equal(technicalFieldLabel("futureSpecification"),"Future specification");
+});
+
+test("sidebar progress keeps untouched, completed and review states distinct", () => {
+  assert.equal(sidebarStepDetail({ required:7, completed:2, state:"not-started" }), "Not started");
+  assert.equal(sidebarStepDetail({ required:7, completed:4, state:"current" }), "3 details remaining");
+  assert.equal(sidebarStepDetail({ required:7, completed:6, state:"incomplete" }), "1 detail remaining");
+  assert.equal(sidebarStepDetail({ required:7, completed:7, state:"current" }), "Complete");
+  assert.equal(sidebarStepDetail({ required:0, completed:0, state:"available" }), "Available");
+  assert.equal(sidebarStepDetail({ required:0, completed:0, state:"ready" }), "Ready to review");
 });

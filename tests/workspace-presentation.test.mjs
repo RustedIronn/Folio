@@ -156,3 +156,17 @@ test("custom date control replaces native date widgets and preserves the selecte
   const empty = renderToStaticMarkup(React.createElement(DateControl, { id:"acceptance-date", label:"Acceptance date", value:"", onChange:noop }));
   assert.ok(empty.includes("Select date"));
 });
+
+const Sidebar = await component("../src/app/components/Sidebar.jsx");
+test("sidebar retains five direct navigation actions and truthful save feedback", () => {
+  const steps=["Customer","Lift & installation","Materials","Commercial terms","Review & PDF"].map((label,index) => ({id:["customer","installation","materials","commercial","review"][index],label,state:index === 0 ? "current" : index === 4 ? "available" : "not-started",required:index === 4 ? 0 : 7,completed:0}));
+  const workflow={currentStep:"customer",workflowProgress:steps,overallProgress:{percent:0,completed:0,required:28},saveStatus:"local",drafts:{localSaved:true,ownerUid:"synthetic-user",status:"error"},visitStep:noop};
+  const html=renderToStaticMarkup(React.createElement(Sidebar,{workflow,onReset:noop}));
+  assert.equal((html.match(/class="rail-step /g)||[]).length,5);
+  assert.ok(html.includes("Current section. 7 details remaining"));
+  assert.ok(html.includes("Saved locally"));
+  assert.ok(html.includes("cloud unavailable"));
+  assert.ok(html.includes("Reset quotation"));
+  assert.ok(html.includes("Review &amp; PDF. Available"));
+  assert.ok(!html.includes("0/7"));
+});

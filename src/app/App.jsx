@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { Check, FileText, RotateCcw } from "lucide-react";
+import { Check } from "lucide-react";
 import CustomerStep from "./steps/CustomerStep.jsx";
 import LiftStep from "./steps/LiftStep.jsx";
 import MaterialsStep from "./steps/MaterialsStep.jsx";
 import CommercialStep from "./steps/CommercialStep.jsx";
 import ReviewStep from "./steps/ReviewStep.jsx";
+import Sidebar from "./components/Sidebar.jsx";
 import Button from "./components/Button.jsx";
 import WorkflowSection from "./components/WorkflowSection.jsx";
 import WorkspaceSummary from "./components/WorkspaceSummary.jsx";
@@ -23,24 +24,10 @@ const stateLabel = (state) => ({ complete: "Complete", ready: "Ready", available
 export default function App() {
   const workflow = useQuotationWorkflow();
   const [showReset, setShowReset] = useState(false);
-  const { currentStep, currentStepIndex, workflowProgress, overallProgress, reference, saveStatus, pendingConfiguration } = workflow;
+  const { currentStep, currentStepIndex, workflowProgress, reference, saveStatus, pendingConfiguration } = workflow;
   const current = workflowProgress[currentStepIndex];
   return <div className={`product-shell screen-${currentStep}`}><a className="skip-link" href="#workspace">Skip to quotation workspace</a>
-    <aside className="product-rail">
-      <a className="product-brand" href="#customer" onClick={(event) => { event.preventDefault(); workflow.visitStep("customer"); }} aria-label="Altis QuoteFlow home"><img src="/assets/altis-emblem.png" alt="" /><span>ALTIS<small>ELEVATORS</small></span></a>
-      <div className="rail-caption">WORKSPACE</div>
-      <div className="rail-project"><FileText size={19} /><div><strong>QuoteFlow</strong><span>Quotation builder</span></div><span className="rail-project-dot" /></div>
-      <div className="rail-divider" />
-      <div className="rail-caption">THIS QUOTATION</div>
-      <nav className="rail-navigation" aria-label="Quotation sections">{workflowProgress.map((step, index) => {
-        return <button type="button" key={step.id} aria-current={step.id === currentStep ? "step" : undefined} aria-label={`${step.label}. ${stateLabel(step.state)}${step.required ? `. ${step.completed} of ${step.required} ready` : ""}`} onClick={() => workflow.visitStep(step.id)}><span className="rail-step-index" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span><span><strong>{step.label}</strong><small>{step.required ? `${step.completed}/${step.required} ready` : stateLabel(step.state)}</small></span>{step.state === "complete" && <Check size={14} aria-label="Complete" />}</button>;
-      })}</nav>
-      <div className="rail-bottom">
-        <div className="rail-completion"><div><span>Required details ready</span><strong>{overallProgress.percent}%</strong></div><progress max="100" value={overallProgress.percent} aria-label="Required details ready, including Altis standards" /><small>{overallProgress.completed} of {overallProgress.required} ready · includes standards</small></div>
-        <Button variant="tertiary" className="rail-reset" onClick={() => setShowReset(true)}><RotateCcw size={14} aria-hidden="true" />Reset quotation</Button>
-        <div className="rail-business"><span>AE</span><div><strong>Altis Elevators</strong><small>Quotation workspace</small></div></div>
-      </div>
-    </aside>
+    <Sidebar workflow={workflow} onReset={() => setShowReset(true)} />
     <main className="product-body" id="workspace">
       <header className="product-topbar"><div className="topbar-context"><span className="workspace-breadcrumb">Workspace / {current.label}</span><span className="topbar-draft">{workflow.documentAccess.canDownload ? "Ready" : workflow.exportReady ? "Details complete" : "Draft"}</span></div><div className="topbar-reference"><strong>{reference || "New quotation"}</strong></div><div className="topbar-actions"><div className={`draft-save save-status-${saveStatus}`} role="status"><span aria-hidden="true" />{draftSaveLabel(workflow.drafts)}</div><AccountControls workflow={workflow} /></div></header>
       <div className="product-page">
