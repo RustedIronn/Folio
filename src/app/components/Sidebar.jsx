@@ -5,17 +5,18 @@ import Button from "./Button.jsx";
 
 export default function Sidebar({ workflow, onReset }) {
   const { currentStep, workflowProgress, overallProgress, saveStatus, drafts } = workflow;
+  const documentLabel = workflow.resolved?.document?.label ?? "Quotation";
   const remaining = Math.max(0, overallProgress.required - overallProgress.completed);
   const saving = saveStatus === "saving" || drafts.status === "loading";
   const attention = saveStatus === "unable" || saveStatus === "local";
   const SaveIcon = saving ? LoaderCircle : attention ? CircleAlert : drafts.ownerUid ? Cloud : HardDrive;
-  const saveTitle = drafts.status === "loading" ? "Opening quotation" : saveStatus === "saving" ? "Saving draft" : saveStatus === "unable" ? "Save needs attention" : saveStatus === "local" ? "Saved locally" : "Draft saved";
+  const saveTitle = drafts.status === "loading" ? "Opening document" : saveStatus === "saving" ? "Saving draft" : saveStatus === "unable" ? "Save needs attention" : saveStatus === "local" ? "Saved locally" : "Draft saved";
 
-  return <aside className="product-rail" aria-label="Quotation navigator">
+  return <aside className="product-rail" aria-label={`${documentLabel} navigator`}>
     <a className="product-brand" href="#customer" onClick={(event) => { event.preventDefault(); workflow.visitStep("customer"); }} aria-label="Altis Folio home"><img src="/assets/altis-emblem.png" alt="" /><span>ALTIS<small>ELEVATORS</small></span></a>
-    <div className="rail-project"><div><strong>Folio</strong><span>Quotation workspace</span></div></div>
-    <p className="rail-caption">Quotation steps</p>
-    <nav className="rail-navigation" aria-label="Quotation sections">{workflowProgress.map((step, index) => {
+    <div className="rail-project"><div><strong>Folio</strong><span>{documentLabel} workspace</span></div></div>
+    <p className="rail-caption">{documentLabel} steps</p>
+    <nav className="rail-navigation" aria-label={`${documentLabel} sections`}>{workflowProgress.map((step, index) => {
       const current = step.id === currentStep;
       const complete = step.required > 0 && step.completed >= step.required;
       const detail = sidebarStepDetail(step);
@@ -26,9 +27,9 @@ export default function Sidebar({ workflow, onReset }) {
       </button>;
     })}</nav>
     <div className="rail-bottom">
-      <div className="rail-completion"><div><span>Quotation details</span><strong>{overallProgress.percent}%</strong></div><progress max="100" value={overallProgress.percent} aria-label="Required quotation details completed, including Altis standards" /><small>{remaining ? `${remaining} required ${remaining === 1 ? "detail" : "details"} remaining` : "All required details complete"}</small></div>
+      <div className="rail-completion"><div><span>{documentLabel} details</span><strong>{overallProgress.percent}%</strong></div><progress max="100" value={overallProgress.percent} aria-label={`Required ${documentLabel.toLowerCase()} details completed, including Altis standards`} /><small>{remaining ? `${remaining} required ${remaining === 1 ? "detail" : "details"} remaining` : "All required details complete"}</small></div>
       <div className={`rail-save save-status-${saveStatus}`} role="status" aria-live="polite" aria-atomic="true"><SaveIcon className={saving ? "rail-save-spinner" : undefined} size={17} aria-hidden="true" /><div><strong>{saveTitle}</strong><span>{draftSaveLabel(drafts)}</span></div></div>
-      <Button variant="tertiary" className="rail-reset" onClick={onReset}><RotateCcw size={13} aria-hidden="true" />Reset quotation</Button>
+      <Button variant="tertiary" className="rail-reset" onClick={onReset}><RotateCcw size={13} aria-hidden="true" />Reset {documentLabel.toLowerCase()}</Button>
     </div>
   </aside>;
 }

@@ -224,7 +224,7 @@ input::placeholder,textarea::placeholder { color:var(--color-muted); }
 .material-row-editing { border-left:var(--group-marker-width) solid var(--color-required); padding-left:var(--space-4); background:var(--color-group); }
 .material-name { display:grid; grid-template-columns:var(--schedule-index-width) 1fr; gap:var(--space-1) var(--space-2); }
 .material-index { grid-row:span 2; font:var(--text-caption) var(--font-notation); color:var(--color-required); }
-.material-name strong { font-size:var(--text-body); font-weight:var(--weight-medium); }
+.material-name strong { min-width:0; overflow-wrap:anywhere; font-size:var(--text-body); font-weight:var(--weight-medium); }
 .material-status { grid-column:2; color:var(--color-muted); font-size:var(--text-caption); }
 .material-status.is-custom { color:var(--color-required); }
 .material-row>p { font-size:var(--text-body); white-space:pre-line; }
@@ -410,3 +410,9 @@ input::placeholder,textarea::placeholder { color:var(--color-muted); }
     .capacity-input-grid .field-error,.travel-input-grid .field-error { grid-row:4; }
   }
 }
+
+/* Additive document controls retain the shared field and disclosure system. */
+.document-type-row { max-width:var(--document-mode-width); margin-bottom:var(--space-5); }
+.commercial-extra { margin-block:var(--space-5); }
+.custom-material-editor { min-width:0; display:grid; gap:var(--space-2); margin-top:var(--space-3); }
+.custom-material-editor input { width:100%; min-height:var(--control-height); border:var(--control-border); border-radius:var(--radius-control); padding:var(--control-padding-y) var(--control-padding-x); background:var(--control-background); color:var(--color-ink); }

@@ -9,6 +9,7 @@ test("PDF presentation formats resolved values without changing calculations or 
   assert.equal(displayDate("Saved date wording"), "Saved date wording");
   assert.equal(displayPrice("₹9,00,000"), "Rs. 9,00,000/-");
   assert.equal(displayPrice("₹0"), "Rs. 0/-");
+  assert.equal(displayPrice("₹5,00,000 each"), "Rs. 5,00,000/- each");
   assert.equal(displayPrice(""), "");
   assert.equal(displayCapacity("6 Persons - Maximum Load - 408 Kgs"), "6 Persons, 408 Kg");
   assert.equal(displayCapacity("Legacy capacity description"), "Legacy capacity description");
@@ -23,12 +24,12 @@ test("PDF travel prefix preserves missing values and existing custom wording", (
 });
 
 test("PDF dimensions label axes without changing values, units or custom descriptions", () => {
-  assert.equal(displayDimensions("1800 × 1650 mm", ["W", "D"]), "W 1800 × D 1650 mm");
-  assert.equal(displayDimensions("1100 x 1400 x 2100 mm", ["W", "D", "H"]), "W 1100 × D 1400 × H 2100 mm");
-  assert.equal(displayDimensions("1100 x 1400 mm", ["W", "D", "H"]), "W 1100 × D 1400 mm");
+  assert.equal(displayDimensions("1800 × 1650 mm", ["W", "D"]), "W 1800 mm × D 1650 mm");
+  assert.equal(displayDimensions("1100 x 1400 x 2100 mm", ["W", "D", "H"]), "W 1100 mm × D 1400 mm × H 2100 mm");
+  assert.equal(displayDimensions("1100 x 1400 mm", ["W", "D", "H"]), "W 1100 mm × D 1400 mm");
   assert.equal(displayDimensions("1800.5 x 1650", ["W", "D"]), "W 1800.5 × D 1650");
   for (const value of ["", null, undefined]) assert.equal(displayDimensions(value, ["W", "D"]), "");
-  for (const value of ["W 1800 × D 1650 mm", "1800 (W) × 1650 (D) mm", "As per site", "1800 x", "180 x 165 cm", "1800 x 1650 x 2100 mm"]) assert.equal(displayDimensions(value, ["W", "D"]), value);
+  for (const value of ["W 1800 mm × D 1650 mm", "1800 (W) × 1650 (D) mm", "As per site", "1800 x", "180 x 165 cm", "1800 x 1650 x 2100 mm"]) assert.equal(displayDimensions(value, ["W", "D"]), value);
 });
 
 for (const [name, quotation] of Object.entries(sampleCases())) {
@@ -40,7 +41,7 @@ for (const [name, quotation] of Object.entries(sampleCases())) {
     assert.ok((buffer.toString("latin1").match(/\/Subtype \/Image/g) ?? []).length >= 2);
     assert.ok(buffer.toString("latin1").includes("/Width 1570"), "The complete approved branding lockup is embedded at high resolution");
     assert.equal(layout.children.length, 6);
-    assert.equal(documentData.pages.materials.rows.length, 12);
+    assert.equal(documentData.pages.materials.rows.length, 13);
     assert.equal(JSON.stringify(quotation), original);
   });
   test(`${name} print-friendly quotation keeps six pages, body text and signature footers without branding`, async () => {

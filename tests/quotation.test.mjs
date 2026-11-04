@@ -14,7 +14,7 @@ const record = catalogue.records[0];
 const alternative = catalogue.records[1];
 function completeQuote() {
   const quote = applyConfiguration(createQuotation(template), record);
-  quote.reference = { quotationNumber: "0691", officeCode: "VJA", financialYear: "2023-24" };
+  quote.reference = { quotationNumber: "0691", officeCode: "VJA", officeCodeMode:"standard", customOfficeCode:"", financialYear: "2023-24" };
   quote.metadata = { date: "2023-12-23", preparedByName: "Executive" };
   quote.customer = { ...quote.customer, salutation: "Mrs.", address: "Pothineni vari street\nMachavaram\nVijayawada", attentionName: "J. Suseela Rani", projectLocation: "Vijayawada" };
   Object.assign(quote.lift.project, { capacity: "6 Persons - Maximum Load - 408 Kgs", travelHeight: "G + 4", floors: "Ground + 4 Upper landings - 5 Stops", landings: "Ground + 4 Upper landings - 5 Stops", shaftMeasurement: "1600 x 1600 mm", carSize: "1100 x 1100 mm", cabinCutting: "CNC Cutting", cabinOpening: "800 mm" });
@@ -83,7 +83,7 @@ test("template constants are available in resolved warranty and obligations page
 test("version one drafts migrate to structured reference and overrides", () => {
   const old = { schemaVersion: 1, quotation: { metadata: { referenceNumber: "AE/QUO/0691/VJA/2023-24", date: "2023-12-23", preparedByName: "Executive" }, customer: { attention: "Mrs. A", address: "Address", projectLocation: "VJA", subject: "Custom" }, lifts: [{ catalogueId: "1", catalogueSourceRow: 4, quantity: "1", specificationOverrides: { speed: "0.7" } }], commercial: { priceAmount: "900000", payment: { advancePercentage: "35", dispatchPercentage: "55", completionPercentage: "10" } } } };
   const migrated = migrateDraft(old, template);
-  assert.deepEqual(migrated.reference, { quotationNumber: "0691", officeCode: "VJA", financialYear: "2023-24" });
+  assert.deepEqual(migrated.reference, { quotationNumber:"0691", officeCode:"VJA", officeCodeMode:"standard", customOfficeCode:"", financialYear:"2023-24" });
   assert.equal(migrated.lift.technicalOverrides.speed, "0.7");
 });
 test("draft storage round-trips v4 quotations and restores a legacy draft key", () => {
@@ -104,9 +104,9 @@ test("review and resolver use the same effective data", () => {
   assert.equal(resolved.missing.length, 0);
   assert.equal(resolved.pages.cover.reference, composeReference(quote.reference, template));
 });
-test("resolved document maps all twelve PDF material rows and commercial output", () => {
+test("resolved document maps the standard and landing-protection material rows and commercial output", () => {
   const resolved = resolveQuotationDocument(completeQuote(), catalogue, template);
-  assert.equal(resolved.pages.materials.rows.length, 12);
+  assert.equal(resolved.pages.materials.rows.length, 13);
   assert.equal(resolved.pages.materials.rows.find((row) => row.key === "rope").value, record.technical.rope);
   assert.equal(resolved.pages.priceSchedule.price.formatted, "₹9,00,000");
   assert.equal(resolved.pages.priceSchedule.footer.date, "2023-12-23");

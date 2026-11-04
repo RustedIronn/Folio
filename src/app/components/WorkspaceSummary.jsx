@@ -3,7 +3,7 @@ export default function WorkspaceSummary({ workflow }) {
   return <aside className="workspace-summary" aria-label="Customer information summary">
     <span className="summary-eyebrow">Document details</span><h3>Customer information</h3>
     <div className="customer-narrative">
-      {(cover.attention || cover.date) && <p>This quotation is prepared{cover.attention && <> for <strong>{cover.attention}</strong></>}{cover.date && <> on <strong>{cover.date}</strong></>}.</p>}
+      {(cover.attention || cover.date) && <p>This {workflow.resolved.document?.lower ?? "quotation"} is prepared{cover.attention && <> for <strong>{cover.attention}</strong></>}{cover.date && <> on <strong>{cover.date}</strong></>}.</p>}
       {cover.customer.address && <p>The customer address is <strong>{cover.customer.address}</strong>.</p>}
       {priceSchedule.projectLocation && <p>The project is located in <strong>{priceSchedule.projectLocation}</strong>.</p>}
     </div>

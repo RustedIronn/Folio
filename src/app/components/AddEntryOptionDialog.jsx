@@ -8,7 +8,7 @@ import Field from "./Field.jsx";
 import Select from "./Select.jsx";
 import "../styles/shared-models.css";
 
-export default function AddEntryOptionDialog({ kind, initialValue, materials, session, onSave, onDismiss }) {
+export default function AddEntryOptionDialog({ kind, initialValue, materials, customOptions = [], allowCustom = true, session, onSave, onDismiss }) {
   const [origin] = useState(() => document.activeElement);
   const [id] = useState(() => crypto.randomUUID());
   const [input, setInput] = useState(() => ({ ...initialValue, kind }));
@@ -40,11 +40,13 @@ export default function AddEntryOptionDialog({ kind, initialValue, materials, se
               <Field id="team-option-passengerCount" label="Passenger capacity (persons)" required error={errors.passengerCount}><input id="team-option-passengerCount" type="number" min="1" step="1" inputMode="numeric" value={input.passengerCount} onChange={(event) => update("passengerCount", event.target.value)} /></Field>
               <Field id="team-option-maximumLoadKg" label="Maximum load (kg)" required error={errors.maximumLoadKg}><input id="team-option-maximumLoadKg" inputMode="decimal" maxLength={32} value={input.maximumLoadKg} onChange={(event) => update("maximumLoadKg", event.target.value)} /></Field>
             </> : <>
-              <Field id="team-option-materialKey" label="Material" required wide error={errors.materialKey}><Select id="team-option-materialKey" positionerClassName="entry-option-positioner" aria-label="Material" value={input.materialKey} onChange={(value) => setInput((current) => ({ ...current, materialKey: value, specification: "" }))} placeholder="Choose a material" options={[{ value: "", label: "Choose a material" }, ...materials.map((row) => ({ value: row.key, label: row.label }))]} /></Field>
+              <Field id="team-option-materialKey" label="Material" required wide error={errors.materialKey}><Select id="team-option-materialKey" positionerClassName="entry-option-positioner" aria-label="Material" value={input.materialKey} onChange={(value) => { const saved = customOptions.find((option) => "saved:" + option.id === value); setInput((current) => ({ ...current, materialKey: saved ? "custom" : value, customName: saved?.customName ?? current.customName ?? "", specification: saved?.specification ?? "" })); }} placeholder="Choose a material" options={[{ value: "", label: "Choose a material" }, ...materials.map((row) => ({ value: row.key, label: row.label })), { value:"custom", label:"Custom material name", disabled:!allowCustom }, ...customOptions.map((row) => ({ value:"saved:" + row.id, label:"Saved: " + row.customName, disabled:!allowCustom }))]} /></Field>
+              {input.materialKey === "custom" && <Field id="team-option-customName" label="Custom material name" required wide error={errors.customName}><input id="team-option-customName" maxLength={60} value={input.customName ?? ""} onChange={(event) => update("customName", event.target.value)} /></Field>}
               <Field id="team-option-specification" label="Specification" required wide error={errors.specification}><textarea id="team-option-specification" rows="3" maxLength={180} value={input.specification} onChange={(event) => update("specification", event.target.value)} /></Field>
             </>}
           </div>
-          <p className="add-model-note">{capacity ? "Use a confirmed passenger/load pair. Saving does not associate this capacity with a lift model." : "This adds a specification under the selected material, not a new PDF row. It does not replace Altis standards or modify the Excel catalogue."} Save &amp; use applies your option to this quotation.</p>
+          <p className="add-model-note">{capacity ? "Use a confirmed passenger/load pair. Saving does not associate this capacity with a lift model." : (input.materialKey === "custom" ? "A custom material adds a named row to this document and a reusable team option. It does not change the catalogue." : "This adds a specification under the selected material. It does not replace Altis standards or modify the Excel catalogue.")} Save &amp; use applies your option to this document.</p>
+          {!capacity && !allowCustom && <p className="field-hint">This document already has six custom material rows. Existing rows can still be edited or removed.</p>}
           {message && <p className="field-error" role="alert">{message}</p>}
         </div>
         <footer className="add-model-actions"><Button variant="secondary" disabled={busy} onClick={onDismiss}>Cancel</Button><Button type="submit" loading={busy}>{busy ? "Saving option…" : "Save & use option"}</Button></footer>

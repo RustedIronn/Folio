@@ -40,6 +40,7 @@ export const ALTIS_QUOTATION_TEMPLATE = {
     { key: "security", label: "Security", defaultValue: "Alarm, overspeed governor and buffer springs." },
     { key: "motors", label: "Motors", source: "technical", technicalKey: "motor" },
     { key: "guideRails", label: "Guide rails", defaultValue: "Italian-made (imported)" },
+    { key: "landingProtection", label: "Landing protection", source: "technical", technicalKey: "landingProtection", optional: true },
     { key: "autoRescueDevice", label: "Auto Rescue Device", defaultValue: "", optional: true },
   ],
   commercial: {

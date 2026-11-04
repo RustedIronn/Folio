@@ -12,10 +12,10 @@ import { getWorkflowProgress, overallCompletion, workflowSectionForPath, WORKFLO
 import { focusWorkflowField, keepWorkflowFocusVisible, readinessMessage } from "../workflowPresentation.js";
 
 export const FIELD_TARGETS = {
-  "reference.quotationNumber": "reference-number", "reference.officeCode": "reference-office", "reference.financialYear": "reference-financial-year", "metadata.date": "quotation-date",
+  "document.type": "document-type", "reference.quotationNumber": "reference-number", "reference.officeCode": "reference-office", "reference.financialYear": "reference-financial-year", "metadata.date": "quotation-date",
   "customer.address": "customer-address", "customer.attentionName": "recipient-name", "customer.projectLocation": "project-location",
   "lift.catalogueId": "configuration", "lift.quantityType": "configuration", "lift.quantity": "quantity", "lift.project.capacity": "passenger-count", "lift.project.travelHeight": "project-travel", "lift.project.floors": "upper-floors", "lift.project.landings": "upper-floors", "lift.project.cabinCutting": "project-cabin-cutting",
-  "commercial.priceAmount": "price", "commercial.taxDescription": "tax", "commercial.packingForwarding": "packing", "commercial.delivery": "delivery", "commercial.transportOctroi": "transport", "commercial.guarantee": "guarantee",
+  "commercial.additionalEntry.label": "commercial-extra-label", "commercial.additionalEntry.value": "commercial-extra-value", "commercial.priceAmount": "price", "commercial.taxDescription": "tax", "commercial.packingForwarding": "packing", "commercial.delivery": "delivery", "commercial.transportOctroi": "transport", "commercial.guarantee": "guarantee",
   "commercial.payment": "payment-advance", "commercial.payment.advance": "payment-advance", "commercial.payment.dispatch": "payment-dispatch", "commercial.payment.completion": "payment-completion",
 };
 
@@ -42,7 +42,7 @@ export function useQuotationWorkflow() {
   const currentStepIndex = WORKFLOW_STEPS.findIndex((step) => step.id === currentStep);
   const errors = (path) => showReviewErrors || attemptedSteps.has(workflowSectionForPath(path)) ? resolved.missing.filter((entry) => entry.path === path).map(readinessMessage).join(" ") : "";
   const readinessGroups = useMemo(() => [
-    ["Customer & reference", resolved.missing.filter((entry) => /^(reference|metadata|customer)\./.test(entry.path))],
+    ["Customer & reference", resolved.missing.filter((entry) => /^(reference|metadata|customer)\./.test(entry.path) || entry.path === "document.type")],
     ["Lift & installation", resolved.missing.filter((entry) => /^lift\./.test(entry.path))],
     ["Materials", resolved.missing.filter((entry) => /^materials\./.test(entry.path))],
     ["Commercial terms", resolved.missing.filter((entry) => /^commercial\./.test(entry.path))],
@@ -95,9 +95,11 @@ export function useQuotationWorkflow() {
   function jumpToIssue(entry) {
     const material = entry.path.startsWith("materials.") && template.materials.find((item) => item.key === entry.path.slice(10));
     if (material?.source === "technical") { openTechnicalField(material.technicalKey); return; }
-    const step = workflowSectionForPath(entry.path);
+    const step = entry.path === "document.type" ? "customer" : workflowSectionForPath(entry.path);
     visitStep(step, true);
-    const target = entry.path === "lift.project.floors" && quotation.lift.installation.floorMode === "custom" ? "custom-floors" : entry.path === "lift.project.landings" && quotation.lift.installation.floorMode === "custom" ? "custom-landings" : FIELD_TARGETS[entry.path] || step;
+    const customMaterial = entry.path.match(/^materials\.customRows\.(\d+)(?:\.(name|value))?$/);
+    const customRow = customMaterial && quotation.materials.customRows?.[Number(customMaterial[1])];
+    const target = customRow ? `custom-material-${customRow.id}-${customMaterial[2] || "name"}` : entry.path === "reference.officeCode" && quotation.reference.officeCodeMode === "custom" ? "custom-office-code" : entry.path === "lift.project.floors" && quotation.lift.installation.floorMode === "custom" ? "custom-floors" : entry.path === "lift.project.landings" && quotation.lift.installation.floorMode === "custom" ? "custom-landings" : FIELD_TARGETS[entry.path] || step;
     window.setTimeout(() => focusWorkflowField(target), 0);
   }
   function openTechnicalField(key) {
@@ -108,7 +110,7 @@ export function useQuotationWorkflow() {
     catalogue, employee, drafts, documentAccess, authIntent, setAuthIntent, completeSignIn, requestPreview, sharedModels, addSharedModel, sharedEntryOptions, template, quotation, setQuotation, resolved, exportReady, workflowProgress, overallProgress, currentStep, currentStepIndex, saveStatus,
     pendingConfiguration, setPendingConfiguration, showReviewErrors, setShowReviewErrors, previewRequested, setPreviewRequested,
     errors, readinessGroups, update, updateProject, updatePayment, chooseConfiguration, confirmConfiguration, visitStep, continueStep, previousStep, resetDraft, jumpToIssue, openTechnicalField,
-    reference: composeReference(quotation.reference, template), suggestedYear: suggestFinancialYear(quotation.metadata.date), stepFor: (id) => workflowProgress.find((step) => step.id === id),
+    reference: composeReference(quotation.reference, template, quotation.document?.type), suggestedYear: suggestFinancialYear(quotation.metadata.date), stepFor: (id) => workflowProgress.find((step) => step.id === id),
     pdfFileName: (resolved.pages.cover.reference || "Altis-Quotation").replace(/[^a-z0-9._-]+/gi, "-") + ".pdf",
   };
 }

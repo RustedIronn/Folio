@@ -20,7 +20,7 @@ test("team capacities validate explicit numeric pairs and normalize formatting w
   assert.equal(entryOptionRecord({ id, kind: "capacity", passengerCount: 7, maximumLoadKg: "0475.500" }).maximumLoadKg, "475.5");
 });
 
-test("shared material options are limited to the twelve existing rows and printable specifications", () => {
+test("shared material options validate standard rows and printable specifications", () => {
   assert.deepEqual(MATERIAL_KEYS, template.materials.map((row) => row.key));
   for (const materialKey of MATERIAL_KEYS) assert.deepEqual(validateEntryOption({ ...material, materialKey }), {});
   assert.ok(validateEntryOption({ ...material, materialKey: "customer" }).materialKey);

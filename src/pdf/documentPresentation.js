@@ -11,8 +11,10 @@ export function displayDate(value) {
 }
 
 export function displayPrice(formatted) {
-  const amount = String(formatted ?? "").replace(/^₹\s*/, "");
-  return amount ? `Rs. ${amount}/-` : "";
+  const value = String(formatted ?? "");
+  const each = value.endsWith(" each");
+  const amount = value.replace(/^₹\s*/, "").replace(/ each$/, "");
+  return amount ? `Rs. ${amount}/-${each ? " each" : ""}` : "";
 }
 
 export function displayCapacity(capacity) {
@@ -30,15 +32,15 @@ export function displayDimensions(value, axes) {
   if (!match) return dimensions;
   const parts = match.slice(1, 4).filter((part) => part !== undefined);
   if (parts.length > axes.length) return dimensions;
-  return parts.map((part, index) => `${axes[index]} ${part}`).join(" × ") + (match[4] ? " mm" : "");
+  return parts.map((part, index) => `${axes[index]} ${part}${match[4] ? " mm" : ""}`).join(" × ");
 }
 
 // PDF generation must fail explicitly rather than return clipped printable content.
 // React PDF exposes the same layout tree to both its browser and Node onRender callbacks.
 export function assertDocumentLayout({ _INTERNAL__LAYOUT__DATA_: layout }) {
-  if (!layout?.children || layout.children.length !== 6) throw new Error("The quotation must contain six pages.");
+  if (!layout?.children || layout.children.length !== 6) throw new Error("The document must contain six pages.");
   for (const page of layout.children) {
-    if (Math.abs(page.box.width - LETTER.width) > 0.1 || Math.abs(page.box.height - LETTER.height) > 0.1) throw new Error("The quotation page size is incorrect.");
+    if (Math.abs(page.box.width - LETTER.width) > 0.1 || Math.abs(page.box.height - LETTER.height) > 0.1) throw new Error("The document page size is incorrect.");
     function inspect(node, left = 0, top = 0, region = null) {
       const x = left + (node.box?.left ?? 0);
       const y = top + (node.box?.top ?? 0);

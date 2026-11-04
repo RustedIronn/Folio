@@ -172,3 +172,18 @@ test("sidebar retains five direct navigation actions and truthful save feedback"
   assert.ok(html.includes("Review &amp; PDF. Available"));
   assert.ok(!html.includes("0/7"));
 });
+
+test("commercial editor and Review show each without a combined-total label", () => {
+  const quotation=sampleQuotation();quotation.lift.quantity="2";quotation.commercial.priceAmount="500000";
+  const workflow=entryWorkflow(quotation);
+  const commercial=renderToStaticMarkup(React.createElement(CommercialStep,{workflow}));
+  const summary=review(quotation);
+  for(const html of [commercial,summary]) {
+    assert.ok(html.includes("₹5,00,000 each"));
+    assert.ok(html.includes("Rupees Five Lakh Only each"));
+    assert.ok(!html.includes("Quotation total"));
+    assert.ok(!html.includes("Total for all"));
+  }
+  assert.ok(commercial.includes("Price per lift"));
+  assert.equal(quotation.commercial.priceAmount,"500000");
+});

@@ -66,7 +66,7 @@ function CoverPage({ page, ...props }) {
   </PdfPage>;
 }
 function KeyValueTable({ rows, small = false }) {
-  return <View style={s.table}>{rows.map(([label, value, height = 27.5], index) => <View key={label} style={[s.row, { minHeight: height, borderBottomWidth: index === rows.length - 1 ? 0 : 0.4 }]}><View style={s.label}><Text>{label}</Text></View><View style={s.value}><Text style={[s.text, { fontSize: small ? 9.5 : safe(value).length > 125 ? 9.5 : 11 }]}>{safe(value)}</Text></View></View>)}<View style={s.tableOutline} /></View>;
+  return <View style={s.table}>{rows.map(([label, value, height = 27.5], index) => <View key={label} style={[s.row, { minHeight: height, borderBottomWidth: index === rows.length - 1 ? 0 : 0.4 }]}><View style={s.label}><Text>{label}</Text></View><View style={s.value}><Text style={[s.text, label === "Quantity & Type:" ? s.bold : {}, { fontSize: small ? 9.5 : safe(value).length > 125 ? 9.5 : 11 }]}>{safe(value)}</Text></View></View>)}<View style={s.tableOutline} /></View>;
 }
 function InstallationPage({ page, ...props }) {
   const t = page.technical; const p = page.project;
@@ -82,18 +82,20 @@ function InstallationPage({ page, ...props }) {
   </PdfPage>;
 }
 function PricePage({ page, ...props }) {
+  const extraOffset = page.additionalEntry ? 30 : 0;
   const terms = [["Taxes", page.taxDescription], ["Packing Forwarding Charges", page.packingForwarding], ["Delivery", page.delivery], ["Transport charges & Octroy", page.transportOctroi], ["Guarantee", page.guarantee]];
-  return <PdfPage page={page} {...props}><Heading top={109}>PRICE SCHEDULE</Heading>
+  return <PdfPage page={page} {...props}><Heading top={109}>{page.documentLabel === "Agreement" ? "AGREEMENT - PRICE SCHEDULE" : "PRICE SCHEDULE"}</Heading>
     <Region name="Price salutation" top={149} height={20}><Text>Dear Sir,</Text></Region>
     <Region name="Price introduction" top={176} height={43}><Text style={[s.text, { textAlign: "justify", textIndent: 57 }]}>We agree to supply, deliver all the required materials and to install {safe(page.quantity)} No of “Altis Elevator” {displayCapacity(page.capacity)} Capacity Passenger Elevators for your Building at, {safe(page.projectLocation)}.</Text></Region>
     <Region name="Price contract introduction" top={222} height={43}><Text style={[s.text, { textAlign: "justify" }]}>This offer accepted by you shall constitute the contract between us to make this offer a legal and valid contract binding on both parties.</Text></Region>
     <Region name="Commercial heading" top={275} height={20}><Text style={[s.bold, { textDecoration: "underline" }]}>Commercial Terms & Conditions: -</Text></Region>
     <Region name="Price amount" top={315} height={34}><Text style={s.bold}><Text style={{ textDecoration: "underline" }}>Price:</Text> {displayPrice(page.price.formatted)}{page.price.words ? ` (${page.price.words}).` : ""}</Text></Region>
-    <Region name="Commercial terms" top={354} height={102}>{terms.map(([label, value]) => <View key={label} style={s.commercialRow}><Text style={s.commercialLabel}>{label}</Text><Text style={[s.commercialValue, { fontSize: terms.some(([, text]) => safe(text).length > 170) ? 9.5 : 11 }]}>: {safe(value)}</Text></View>)}</Region>
-    <Region name="Payment heading" top={462} height={20}><Text style={[s.bold, { textDecoration: "underline" }]}>Terms of Payments</Text></Region>
-    <Region name="Payment stages" top={489} height={46}>{page.payment.map((stage) => <Text key={stage.key} style={s.text}>{safe(stage.percentage)}% {stage.description}</Text>)}</Region>
-    <Region name="Acceptance statement" top={543} height={30}><Text>All the above specifications /Prices and other terms &conditions are accepted.</Text></Region>
-    {[["Accepted by", page.acceptance.acceptanceName], ["Signature", ""], ["Name", page.acceptance.acceptanceName], ["Date", displayDate(page.acceptance.acceptanceDate)]].map(([label, value], index) => <Region key={label} name="Acceptance field" top={584 + index * 27} height={26}><View style={{ flexDirection: "row" }}><Text style={{ width: 79 }}>{label}</Text><Text style={{ flex: 1 }}>: {safe(value)}</Text></View></Region>)}
+    {page.additionalEntry && <Region name="Additional commercial entry" top={352} height={28} style={{fontSize:10.5}}><Text><Text style={s.bold}>{page.additionalEntry.label}:</Text> {page.additionalEntry.value}</Text></Region>}
+    <Region name="Commercial terms" top={354 + extraOffset} height={102}>{terms.map(([label, value]) => <View key={label} style={s.commercialRow}><Text style={s.commercialLabel}>{label}</Text><Text style={[s.commercialValue, { fontSize: terms.some(([, text]) => safe(text).length > 170) ? 9.5 : 11 }]}>: {safe(value)}</Text></View>)}</Region>
+    <Region name="Payment heading" top={462 + extraOffset} height={20}><Text style={[s.bold, { textDecoration: "underline" }]}>Terms of Payments</Text></Region>
+    <Region name="Payment stages" top={489 + extraOffset} height={46}>{page.payment.map((stage) => <Text key={stage.key} style={s.text}>{safe(stage.percentage)}% {stage.description}</Text>)}</Region>
+    <Region name="Acceptance statement" top={543 + extraOffset} height={30}><Text>All the above specifications /Prices and other terms &conditions are accepted.</Text></Region>
+    {[["Accepted by", page.acceptance.acceptanceName], ["Signature", ""], ["Name", page.acceptance.acceptanceName], ["Date", displayDate(page.acceptance.acceptanceDate)]].map(([label, value], index) => <Region key={label} name="Acceptance field" top={584 + extraOffset + index * 27} height={26}><View style={{ flexDirection: "row" }}><Text style={{ width: 79 }}>{label}</Text><Text style={{ flex: 1 }}>: {safe(value)}</Text></View></Region>)}
   </PdfPage>;
 }
 function WarrantyPage({ page, ...props }) {
@@ -104,6 +106,7 @@ function WarrantyPage({ page, ...props }) {
   </PdfPage>;
 }
 function MaterialsPage({ page, ...props }) {
+  if (page.rows.length > 12) return <PdfPage page={page} {...props}><Heading>MATERIAL USED BY ALTIS ELEVATORS</Heading><Region name="Materials schedule" top={117} height={598} style={{fontSize:page.rows.length > 16 ? 9.5 : 10.5, lineHeight:1.2}}><View style={{minHeight:598,justifyContent:"space-between",flexShrink:0}}>{page.rows.map((row,index) => <View key={row.key} style={[s.materialRow,{marginBottom:page.rows.length > 16 ? 6 : 8}]}><Text style={s.materialLabel}>{index + 1}. {row.label}</Text><Text style={s.materialColon}>{row.value ? ":" : ""}</Text><Text style={s.materialValue}>{["cabin","doors"].includes(row.key) && row.value && !safe(row.value).startsWith("(i)") ? "(i) " : ""}{safe(row.value)}</Text></View>)}</View></Region></PdfPage>;
   const tops = [117, 163.2, 215, 266.8, 317.4, 368, 423, 473.8, 523.2, 572.8, 620, 667.2];
   return <PdfPage page={page} {...props}><Heading>MATERIAL USED BY ALTIS ELEVATORS</Heading>{page.rows.map((row, index) => <Region key={row.key} name={`${row.label} material`} top={tops[index]} height={index === 11 ? 48 : tops[index + 1] - tops[index] - 3} style={{ fontSize: safe(row.value).length > 130 ? 9.5 : 11 }}><View style={s.materialRow}><Text style={s.materialLabel}>{index + 1}. {row.label}</Text>{row.value && <><Text style={s.materialColon}>:</Text><Text style={s.materialValue}>{["cabin", "doors"].includes(row.key) && !safe(row.value).startsWith("(i)") ? "(i) " : ""}{safe(row.value)}</Text></>}</View></Region>)}</PdfPage>;
 }

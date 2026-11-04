@@ -101,6 +101,22 @@ test("Firestore rules: private employee drafts, verified access, revision checks
     const option = { ...entryOptionPayload({ kind: "material", materialKey: "cabin", specification: "Synthetic finish" }, optionId), created_by: "alice", created_at: serverTimestamp() };
     for (const change of [{ materialKey: "customer" }, { specification: "   " }, { specification: "x".repeat(181) }, { passengerCount: 6 }]) await assertFails(setDoc(doc(alice, `quotationOptions/${optionId}`), { ...option, ...change }));
   });
+  await t.test("custom material names and landing protection remain verified, bounded and append-only", async () => {
+    const optionId = uuid();
+    const custom = {...entryOptionPayload({kind:"material",materialKey:"custom",customName:"Synthetic trim",specification:"Synthetic finish"},optionId),created_by:"alice",created_at:serverTimestamp()};
+    await assertSucceeds(setDoc(doc(alice,`quotationOptions/${optionId}`),custom));
+    await assertSucceeds(getDoc(doc(bob,`quotationOptions/${optionId}`)));
+    await assertFails(setDoc(doc(bob,`quotationOptions/${optionId}`),{...custom,created_by:"bob"}));
+    for(const override of [{customName:""},{customName:"x".repeat(61)},{specification:" "},{materialKey:"cabin"},{created_by:"bob"}]) {
+      const nextId=uuid();await assertFails(setDoc(doc(alice,`quotationOptions/${nextId}`),{...custom,...override,id:nextId}));
+    }
+    for(const db of [anon,pending]) await assertFails(getDoc(doc(db,`quotationOptions/${optionId}`)));
+    const landingId=uuid();
+    await assertSucceeds(setDoc(doc(alice,`quotationOptions/${landingId}`),{...entryOptionPayload({kind:"material",materialKey:"landingProtection",specification:"Synthetic landing protection"},landingId),created_by:"alice",created_at:serverTimestamp()}));
+    const draftId=uuid();const agreement=data();agreement.quotation.document.type="agreement";agreement.quotation.reference.officeCode="TEST";agreement.quotation.materials.customRows=[{id:optionId,name:"Synthetic trim",value:"Synthetic finish"}];agreement.quotation.commercial.additionalEntry={label:"Site note",value:"Information only"};
+    await assertSucceeds(setDoc(doc(alice,`users/alice/quotationDrafts/${draftId}`),agreement));
+    await assertFails(getDoc(doc(bob,`users/alice/quotationDrafts/${draftId}`)));
+  });
   await t.test("a newly verified account needs no approval or domain allowlist", async () => {
     const newcomer = env.authenticatedContext("new-employee", { email_verified: true, email: "personal@example.test" }).firestore();
     await assertSucceeds(setDoc(doc(newcomer, `users/new-employee/quotationDrafts/${uuid()}`), data("new-employee")));

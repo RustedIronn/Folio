@@ -236,3 +236,18 @@ test("legacy version-one input remains available through the guest-to-employee t
   await login(value, api); await value.saveNow();
   assert.deepEqual((await api.get("alice", value.getSnapshot().workspace.id)).quotation, before);
 });
+
+test("agreement extensions survive guest import, cloud save and another device", async (t) => {
+  const cache = storage(), api = cloud(), value = manager(t,cache), q = example();
+  q.document.type = "agreement";
+  q.reference.officeCodeMode = "custom"; q.reference.officeCode = "TEST"; q.reference.customOfficeCode = "TEST";
+  q.materials.customRows = [{id:"synthetic-row",name:"Synthetic trim",value:"Synthetic finish"}];
+  q.commercial.additionalEntry = {label:"Site note",value:"Information only"};
+  value.update(q); const restoredGuest = manager(t,cache);
+  assert.deepEqual(restoredGuest.getSnapshot().workspace.quotation,q);
+  await login(value,api); await value.saveNow();
+  const another = manager(t); await login(another,api);
+  assert.deepEqual(another.getSnapshot().workspace.quotation,q);
+  value.setSession({uid:null,authorized:false}); await login(value,api);
+  assert.deepEqual(value.getSnapshot().workspace.quotation,q);
+});
