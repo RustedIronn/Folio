@@ -1,3 +1,4 @@
+import { quotationCatalogue } from "../src/models/catalogue/sharedModels.js";
 import fs from "node:fs/promises";
 import { pathToFileURL } from "node:url";
 import path from "node:path";
@@ -20,7 +21,7 @@ export async function renderQuotation(quotation, { variant = "branded" } = {}) {
   }
   const assets = {};
   if (variant !== "printable") for (const [key, file] of [["lockup", "altis-brand-lockup.png"], ["watermark", "altis-watermark.png"]]) assets[key] = "data:image/png;base64," + (await fs.readFile(path.join(root, "public/assets", file))).toString("base64");
-  const documentData = resolveQuotationDocument(quotation, catalogue, template);
+  const documentData = resolveQuotationDocument(quotation, quotationCatalogue(catalogue, [], quotation), template);
   let layout;
   const buffer = await renderToBuffer(React.createElement(renderer, { documentData, variant, assets, onRender: (result) => { layout = result._INTERNAL__LAYOUT__DATA_; } }));
   return { buffer, layout, documentData };

@@ -1,3 +1,5 @@
+import { approvedCatalogueRecord } from "./catalogueCorrections.js";
+
 export const SHARED_MODEL_FIELDS = [
   { key: "quantityType", column: "description", label: "Model / configuration description", required: true, limit: 180 },
   { key: "liftType", column: "lift_type", label: "Lift category", required: true, limit: 80 },
@@ -46,7 +48,7 @@ export function isSharedModel(record) {
 }
 
 export function quotationCatalogue(approvedCatalogue, sharedRecords, quotation) {
-  const records = new Map(approvedCatalogue.records.map((record) => [record.sourceRecordId, record]));
+  const records = new Map(approvedCatalogue.records.map((record) => [record.sourceRecordId, approvedCatalogueRecord(record)]));
   for (const record of sharedRecords) if (isSharedModel(record)) records.set(record.sourceRecordId, record);
   const snapshot = quotation?.lift?.configurationSnapshot;
   if (isSharedModel(snapshot) && snapshot.sourceRecordId === quotation.lift.catalogueId) records.set(snapshot.sourceRecordId, snapshot);

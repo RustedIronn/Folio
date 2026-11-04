@@ -1,3 +1,5 @@
+import { normaliseLiftCategory } from "../models/catalogue/catalogueCorrections.js";
+
 const technicalFields = ["liftType", "speed", "carProtectionDoor", "doorFrame", "motor", "controller", "rope", "landingProtection"];
 
 export function normaliseCatalogueSearch(value) {
@@ -5,7 +7,7 @@ export function normaliseCatalogueSearch(value) {
 }
 
 export function configurationName(record) {
-  return `${record.origin === "shared" ? "Team model" : `#${record.sourceRecordId}`} · ${record.technical.liftType || "Lift type not recorded"} — ${record.quantityType || "Configuration description not recorded"}`;
+  return `${record.origin === "shared" ? "Team model" : `#${record.sourceRecordId}`} · ${record.quantityType || record.technical.liftType || "Configuration description not recorded"}`;
 }
 
 export function configurationCharacteristics(record) {
@@ -25,19 +27,19 @@ export function cataloguePickerOption(record) {
 
 function searchableFields(record) {
   return {
-    description: normaliseCatalogueSearch(record.quantityType),
-    liftType: normaliseCatalogueSearch(record.technical.liftType),
-    technical: technicalFields.map((field) => normaliseCatalogueSearch(record.technical[field])).filter(Boolean).join(" "),
+    description: normaliseCatalogueSearch([record.quantityType, record.sourceValues?.B].filter(Boolean).join(" ")),
+    liftType: normaliseCatalogueSearch([record.technical.liftType, record.sourceValues?.C].filter(Boolean).join(" ")),
+    technical: [...technicalFields.map((field) => record.technical[field]), ...["D", "E", "F", "G", "H", "I", "Q"].map((column) => record.sourceValues?.[column])].filter(Boolean).map(normaliseCatalogueSearch).join(" "),
   };
 }
 
 export function searchCatalogue(records, { search = "", liftType = "" } = {}) {
   const query = normaliseCatalogueSearch(search);
   const tokens = query.split(" ").filter(Boolean);
-  const typeFilter = normaliseCatalogueSearch(liftType);
+  const typeFilter = normaliseCatalogueSearch(normaliseLiftCategory(liftType));
 
   return records
-    .filter((record) => !typeFilter || normaliseCatalogueSearch(record.technical.liftType) === typeFilter)
+    .filter((record) => !typeFilter || normaliseCatalogueSearch(normaliseLiftCategory(record.technical.liftType)) === typeFilter)
     .map((record) => {
       const fields = searchableFields(record);
       const haystack = `${fields.description} ${fields.liftType} ${fields.technical}`;

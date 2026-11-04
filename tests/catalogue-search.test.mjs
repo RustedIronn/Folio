@@ -19,7 +19,7 @@ test("catalogue search finds approved technical characteristics and filters lift
 
 test("catalogue search returns an empty result without inventing a match", () => {
   assert.deepEqual(searchCatalogue(records, { search: "unapproved capacity" }), []);
-  assert.equal(configurationName(records[0]), "#2 · Hydraulic Lift — SS Big Vision Power Operated Door Lift");
+  assert.equal(configurationName(records[0]), "#2 · SS Big Vision Power Operated Door Lift");
   assert.match(configurationCharacteristics(records[0]), /0.50 mtr\/sec/);
 });
 
@@ -28,7 +28,7 @@ test("catalogue picker options keep approved identifiers separate from readable 
   assert.deepEqual(option, {
     value: "2",
     sourceId: "2",
-    label: "#2 · Hydraulic Lift — SS Big Vision Power Operated Door Lift",
+    label: "#2 · SS Big Vision Power Operated Door Lift",
     category: "Hydraulic Lift",
     description: "SS Big Vision Power Operated Door Lift",
     characteristics: "0.50 mtr/sec · SS Big Vision Door · SS Door Frames",
