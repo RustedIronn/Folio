@@ -98,6 +98,10 @@
     --radius-control: .25rem;
     --radius-panel: .375rem;
     --radius-round: 50%;
+    --toggle-width: 44px;
+    --toggle-height: 26px;
+    --toggle-thumb-size: 18px;
+    --toggle-padding: 3px;
     --focus-width: 2px;
     --focus-offset: 2px;
     --shadow-focus: 0 0 0 4px #557a4526;

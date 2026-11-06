@@ -41,6 +41,7 @@ export function extensionDefaults(quotation, template) {
     }
     lift={...lift,project,installation:{...installation,cellarConvention:true}};
   }
+  if (lift?.installation && lift.installation.includeCellar === undefined) lift = {...lift, installation:{...lift.installation, includeCellar:true}};
   return { ...quotation, lift,
     reference: { officeCodeMode: quotation.reference?.officeCode && quotation.reference.officeCode !== "VJA" ? "custom" : "standard", customOfficeCode: "", ...quotation.reference },
     materials: { customRows: [], ...quotation.materials },

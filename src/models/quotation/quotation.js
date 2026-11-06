@@ -11,7 +11,7 @@ export const PROJECT_FIELDS = [
 ];
 
 const emptyInstallation = () => ({
-  floorMode: "standard", cellarConvention: true, upperFloors: "", customFloors: "", customLandings: "",
+  floorMode: "standard", cellarConvention: true, includeCellar: true, upperFloors: "", customFloors: "", customLandings: "",
   shaft: { mode: "structured", width: "", depth: "", custom: "" },
   car: { mode: "structured", width: "", depth: "", height: "", custom: "" },
   cabinOpening: { mode: "structured", width: "", height: "", custom: "" },
@@ -39,15 +39,16 @@ export function formatDimensions(values) {
   const parts = values.filter((value) => String(value ?? "").trim());
   return parts.length === values.length ? parts.join(" × ") + " mm" : "";
 }
-export function standardFloorDescription(upperFloors) {
+export function standardFloorDescription(upperFloors, includeCellar = true) {
   if (!/^\d+$/.test(String(upperFloors ?? ""))) return "";
   const upper = Number(upperFloors);
+  if (!includeCellar) return upper === 0 ? "Ground floor – 1 Stop" : `Ground + ${upper} Upper landings – ${upper + 1} Stops`;
   return `Cellar + Ground + ${upper} Upper landings – ${upper + 2} Stops`;
 }
 function withInstallationProject(next) {
   const installation = next.lift.installation;
   if (installation.floorMode === "standard") {
-    const description = standardFloorDescription(installation.upperFloors);
+    const description = standardFloorDescription(installation.upperFloors, installation.includeCellar !== false);
     next.lift.project.floors = description;
     next.lift.project.landings = description;
   } else {
@@ -58,6 +59,11 @@ function withInstallationProject(next) {
   next.lift.project.carSize = installation.car.mode === "structured" ? formatDimensions([installation.car.width, installation.car.depth, installation.car.height]) : installation.car.custom;
   next.lift.project.cabinOpening = installation.cabinOpening.mode === "structured" ? formatDimensions([installation.cabinOpening.width, installation.cabinOpening.height]) : installation.cabinOpening.custom;
   return next;
+}
+export function setIncludeCellar(quotation, includeCellar) {
+  const next = structuredClone(quotation);
+  next.lift.installation.includeCellar = Boolean(includeCellar);
+  return withInstallationProject(next);
 }
 export function setFloorMode(quotation, mode) {
   const next = structuredClone(quotation); next.lift.installation.floorMode = mode;
@@ -220,11 +226,11 @@ export function resolveQuotationDocument(quotation, catalogue, template) {
     documentNotices: identity.type === "agreement" ? ["Agreement mode retains the approved quotation cover letter, offer/acceptance wording and contractual clauses. Altis must confirm that this wording is appropriate before an agreement is issued."] : [],
     pages: {
       cover: { documentLabel: identity.label, company: template.company, reference: composeReference(quotation.reference, template, identity.type), date: quotation.metadata.date, customer: quotation.customer, attention: composeAttention(quotation.customer), subject: composeSubject(quotation.customer, identity.type), letter: template.coverLetter },
-      installation: { quantity: quotation.lift.quantity, quantityType: record?.quantityType ?? "", quantityAndType: composeQuantityAndType(quotation.lift.quantity, record?.quantityType ?? ""), technical, project: { ...quotation.lift.project, capacity: composeCapacity(quotation.lift.project) }, carDesign: materials.cabin, footer: { date: quotation.metadata.date, ...template.signatures } },
+      installation: { includeCellar: quotation.lift.installation.includeCellar !== false, quantity: quotation.lift.quantity, quantityType: record?.quantityType ?? "", quantityAndType: composeQuantityAndType(quotation.lift.quantity, record?.quantityType ?? ""), technical, project: { ...quotation.lift.project, capacity: composeCapacity(quotation.lift.project) }, carDesign: materials.cabin, footer: { date: quotation.metadata.date, ...template.signatures } },
       priceSchedule: { quantity: quotation.lift.quantity, capacity: composeCapacity(quotation.lift.project), projectLocation: quotation.customer.projectLocation, documentLabel: identity.label, additionalEntryPresent: hasAdditional, additionalEntry: hasAdditional && String(additional.label ?? "").trim() && String(additional.value ?? "").trim() ? { label: String(additional.label).trim(), value: String(additional.value).trim() } : null, price: documentPrice(quotation.commercial.priceAmount, quotation.lift.quantity), taxDescription: quotation.commercial.taxDescription, packingForwarding: quotation.commercial.packingForwarding, delivery: quotation.commercial.delivery, transportOctroi: quotation.commercial.transportOctroi, guarantee: quotation.commercial.guarantee, bankDetails, bankDetailsCustom: quotation.commercial.bankDetails?.mode === "custom", payment: template.commercial.paymentStages.map((stage) => ({ ...stage, percentage: quotation.commercial.payment[stage.key] })), acceptance: quotation.document, footer: { date: quotation.metadata.date, ...template.signatures } },
       warranty: { ...template.warranty, sections: resolveWarrantySections(template,warrantyPeriods), footer: { date: quotation.metadata.date, ...template.signatures } },
       materials: { rows: [...template.materials.map((item) => ({ ...item, value: materials[item.key] })), ...customRows.map((row, index) => ({ key: "custom-" + (row.id || index), id: row.id, label: typeof row.name === "string" ? row.name : "", value: typeof row.value === "string" ? row.value : "", source: "custom", optional: false }))], footer: { date: quotation.metadata.date, ...template.signatures } },
-      obligations: { ...template.obligations, footer: { date: quotation.metadata.date, ...template.signatures } },
+      obligations: { ...template.obligations, customer: /hydraulic/i.test(record?.quantityType ?? "") ? [template.obligations.customer[0], template.obligations.customer.at(-1)] : template.obligations.customer, footer: { date: quotation.metadata.date, ...template.signatures } },
     },
   };
 }

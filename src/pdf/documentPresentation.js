@@ -21,9 +21,9 @@ export function displayCapacity(capacity) {
   return String(capacity ?? "").replace(/^(\d+) Persons - Maximum Load - ([\d.]+) Kgs$/, "$1 Persons, $2 Kg");
 }
 
-export function displayTravelHeight(value) {
+export function displayTravelHeight(value, includeCellar = true) {
   const travel = String(value ?? "").trim();
-  return /^\d+$/.test(travel) ? `C + G + ${travel}` : /^G\s*\+\s*\d+$/.test(travel) ? `C + ${travel}` : travel;
+  return /^\d+$/.test(travel) ? `${includeCellar ? "C + " : ""}G + ${travel}` : includeCellar && /^G\s*\+\s*\d+$/.test(travel) ? `C + ${travel}` : travel;
 }
 
 export function displayDimensions(value, axes) {
