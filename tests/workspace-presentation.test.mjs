@@ -204,3 +204,17 @@ test("revised commercial controls show numeric terms, bank selection and custom 
  html=renderToStaticMarkup(React.createElement(CommercialStep,{workflow:entryWorkflow(q)}));
  for(const key of ["accountName","accountNumber","bankName","ifsc"])assert.ok(html.includes('id="bank-'+key+'"'));
 });
+
+test("Lift editor exposes the labelled Cellar switch with its stored state",()=>{
+ const q=sampleQuotation();let html=renderToStaticMarkup(React.createElement(LiftStep,{workflow:entryWorkflow(q)}));
+ assert.ok(html.includes('id="include-cellar"'));assert.ok(html.includes('role="switch"'));assert.ok(html.includes('aria-checked="true"'));
+ q.lift.installation.includeCellar=false;
+ html=renderToStaticMarkup(React.createElement(LiftStep,{workflow:entryWorkflow(q)}));assert.ok(html.includes('aria-checked="false"'));assert.ok(html.includes("Numbers print as G + your number"));
+});
+
+test("saved drafts expose a specific delete action only for verified employees with a selected draft",()=>{
+ const q=sampleQuotation();const entry={id:"synthetic-draft",quotation:q};
+ const workflow={employee:{user:{uid:"synthetic-user"},authorized:true},drafts:{drafts:[entry],workspace:entry,localSaved:true,status:"saved",manager:{open:noop}},setAuthIntent:noop};
+ let html=renderToStaticMarkup(React.createElement(CloudDraftsBar,{workflow}));assert.ok(html.includes("Delete selected draft"));assert.ok(!html.includes("Delete all"));
+ workflow.employee.authorized=false;html=renderToStaticMarkup(React.createElement(CloudDraftsBar,{workflow}));assert.ok(!html.includes("Delete selected draft"));
+});

@@ -31,6 +31,18 @@ export function quotationDraftsService(client) {
       assertEmployee(client, uid);
       return documentDraft(result, uid);
     },
+    async remove(uid, id, expected) {
+      assertEmployee(client, uid);
+      if (!UUID.test(id) || !Number.isInteger(expected?.revision) || expected.revision < 0 || typeof expected.fingerprint !== "string") throw new Error("This draft cannot be deleted safely.");
+      return f.runTransaction(client.db, async (transaction) => {
+        const reference = f.doc(collection(uid), id);
+        const remote = documentDraft(await transaction.get(reference), uid);
+        assertEmployee(client, uid);
+        if (!remote) return;
+        if (remote.revision !== expected.revision || quotationFingerprint(remote.quotation) !== expected.fingerprint) throw Object.assign(new Error("This draft changed on another device. Refresh and review it before deleting."), {code:"draft/delete-conflict"});
+        transaction.delete(reference);
+      });
+    },
     async save(uid, workspace) {
       assertEmployee(client, uid);
       if (!UUID.test(workspace.id) || !UUID.test(workspace.mutationId) || !isQuotationDraft(workspace.quotation) || !Number.isInteger(workspace.baseRevision) || workspace.baseRevision < 0) throw new Error("This quotation cannot be saved safely. Your local copy has been kept.");

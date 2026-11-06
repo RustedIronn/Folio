@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { createQuotation, serializeDraft, DRAFT_STORAGE_KEY } from "../src/models/quotation/quotation.js";
 import { ALTIS_QUOTATION_TEMPLATE as template } from "../src/templates/altisQuotationTemplate.js";
-import { createQuotationWorkspace, employeeWorkspaceKey, GUEST_WORKSPACE_KEY, draftSaveLabel } from "../src/models/quotation/workspace.js";
+import { createQuotationWorkspace, employeeWorkspaceKey, GUEST_WORKSPACE_KEY, draftSaveLabel, quotationFingerprint } from "../src/models/quotation/workspace.js";
 import { quotationDocumentAccess } from "../src/services/employeeAccess.js";
 
 let sequence = 0;
@@ -37,6 +37,12 @@ function cloud() {
       if ((existing?.revision ?? 0) !== workspace.baseRevision) throw Object.assign(new Error("conflict"), { code: "draft/conflict", remote: copy(existing) });
       const next = { id: workspace.id, schemaVersion: 4, ownerUid: uid, quotation: copy(workspace.quotation), revision: (existing?.revision ?? 0) + 1, lastMutationId: workspace.mutationId, createdAt: existing?.createdAt ?? ++clock, updatedAt: ++clock };
       map(uid).set(next.id, next); api.writes++; return copy(next);
+    },
+    async remove(uid,id,expected) {
+      if(api.offline) throw Object.assign(new Error("offline"),{code:"unavailable"});
+      const existing=map(uid).get(id);if(!existing)return;
+      if(existing.revision !== expected.revision || quotationFingerprint(existing.quotation) !== expected.fingerprint) throw Object.assign(new Error("This draft changed on another device. Refresh and review it before deleting."),{code:"draft/delete-conflict"});
+      map(uid).delete(id);
     },
     seed(uid, quotation = example()) { const id = uuid(); map(uid).set(id, { id, schemaVersion: 4, ownerUid: uid, quotation: copy(quotation), revision: 1, lastMutationId: uuid(), createdAt: ++clock, updatedAt: ++clock }); return id; },
   };
@@ -250,4 +256,41 @@ test("agreement extensions survive guest import, cloud save and another device",
   assert.deepEqual(another.getSnapshot().workspace.quotation,q);
   value.setSession({uid:null,authorized:false}); await login(value,api);
   assert.deepEqual(value.getSnapshot().workspace.quotation,q);
+});
+
+test("deleting the selected draft preserves other drafts and never autosaves it back",async(t)=>{
+ const api=cloud(),keep=api.seed("alice"),remove=api.seed("alice"),cache=storage(),value=manager(t,cache);
+ await login(value,api);assert.equal(value.getSnapshot().workspace.id,remove);
+ await value.deleteDraft(remove);assert.equal(await api.get("alice",remove),null);assert.ok(await api.get("alice",keep));
+ assert.notEqual(value.getSnapshot().workspace.id,remove);assert.equal(value.getSnapshot().workspace.quotation.customer.address,"");
+ assert.ok(!value.getSnapshot().drafts.some((entry)=>entry.id === remove));
+ await value.saveNow();await value.retry();assert.equal(await api.get("alice",remove),null);
+ const restored=manager(t,cache);await login(restored,api);assert.ok(!restored.getSnapshot().drafts.some((entry)=>entry.id === remove));
+});
+test("deleting a different draft leaves current input and other employee drafts intact",async(t)=>{
+ const api=cloud(),remove=api.seed("alice"),keep=api.seed("alice"),bob=api.seed("bob"),value=manager(t);
+ await login(value,api);value.update((q)=>({...q,customer:{...q.customer,projectLocation:"Current synthetic edits"}}));
+ const before=copy(value.getSnapshot().workspace);await value.deleteDraft(remove);
+ assert.deepEqual(value.getSnapshot().workspace,before);assert.ok(await api.get("alice",keep));assert.ok(await api.get("bob",bob));
+});
+test("offline and stale-revision deletion failures keep both local and cloud data",async(t)=>{
+ const api=cloud(),id=api.seed("alice"),left=manager(t),right=manager(t);await login(left,api);await login(right,api);
+ const before=copy(left.getSnapshot().workspace);api.offline=true;await assert.rejects(left.deleteDraft(id),/offline/);assert.deepEqual(left.getSnapshot().workspace,before);assert.ok(await api.get("alice",id));
+ api.offline=false;right.update((q)=>({...q,customer:{...q.customer,projectLocation:"Newer device version"}}));await right.saveNow();
+ await assert.rejects(left.deleteDraft(id),/changed on another device/);assert.deepEqual(left.getSnapshot().workspace,before);assert.ok(await api.get("alice",id));
+ await left.retry();await left.deleteDraft(id);assert.equal(await api.get("alice",id),null);
+});
+test("guests and unverified employees cannot request draft deletion",async(t)=>{
+ const value=manager(t),api=cloud(),id=api.seed("alice");await assert.rejects(value.deleteDraft(id),/verified account/);
+ await login(value,api);value.setSession({uid:"alice",authorized:false,api});await assert.rejects(value.deleteDraft(id),/verified account/);assert.ok(await api.get("alice",id));
+});
+test("deletion waits for an in-flight autosave and removes its acknowledged version",async(t)=>{
+ const api=cloud(),value=manager(t);await login(value,api);value.update(example());
+ const originalSave=api.save;let release;const waiting=new Promise((resolve)=>{release=resolve;});api.save=async(...args)=>{await waiting;return originalSave(...args);};
+ const saving=value.saveNow(),id=value.getSnapshot().workspace.id;const deleting=value.deleteDraft(id);assert.equal(value.getSnapshot().deletingDraftId,id);
+ release();await saving;await deleting;assert.equal(await api.get("alice",id),null);await value.saveNow();assert.equal(await api.get("alice",id),null);
+});
+test("another device preserves its cached copy as a conflict instead of recreating a deleted draft",async(t)=>{
+ const api=cloud(),id=api.seed("alice"),left=manager(t),right=manager(t);await login(left,api);await login(right,api);await left.deleteDraft(id);await right.retry();
+ assert.equal(right.getSnapshot().status,"conflict");await right.saveNow();assert.equal(await api.get("alice",id),null);
 });

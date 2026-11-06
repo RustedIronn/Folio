@@ -86,7 +86,7 @@ service cloud.firestore {
         && draftShape(request.resource.data, uid)
         && request.resource.data.createdAt == resource.data.createdAt
         && request.resource.data.revision == resource.data.revision + 1;
-      allow delete: if false;
+      allow delete: if verifiedUser() && request.auth.uid == uid && resource.data.ownerUid == uid;
     }
     match /{document=**} {
       allow read, write: if false;

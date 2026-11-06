@@ -1,3 +1,5 @@
+import { quotationDraftsService } from "../src/services/quotationDrafts.js";
+import { quotationFingerprint } from "../src/models/quotation/workspace.js";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
@@ -52,9 +54,21 @@ test("Firestore rules: private employee drafts, verified access, revision checks
     await assertSucceeds(setDoc(doc(alice, path), update));
     await assertFails(setDoc(doc(alice, path), { ...update, lastMutationId: uuid(), updatedAt: serverTimestamp() }));
     await assertFails(setDoc(doc(alice, path), { ...update, revision: 3, createdAt: serverTimestamp(), updatedAt: serverTimestamp() }));
-    await assertFails(deleteDoc(doc(alice, path)));
+    await assertFails(deleteDoc(doc(pending, path)));
     await assertFails(setDoc(doc(bob, path), { ...update, revision: 3, updatedAt: serverTimestamp() }));
     await assertFails(deleteDoc(doc(bob, path)));
+  });
+  await t.test("only verified draft owners can delete, with service revision checks and isolation",async()=>{
+    const first=uuid(),other=uuid();const ref="users/alice/quotationDrafts/"+first;
+    await assertSucceeds(setDoc(doc(alice,ref),data()));await assertSucceeds(setDoc(doc(alice,"users/alice/quotationDrafts/"+other),data()));
+    const unverifiedOwner=env.authenticatedContext("alice",{email_verified:false}).firestore();
+    for(const db of [anon,pending,bob,unverifiedOwner])await assertFails(deleteDoc(doc(db,ref)));
+    const service=quotationDraftsService({db:alice,firestore,userId:()=>"alice",isVerified:()=>true});
+    const remote=await service.get("alice",first);
+    await assert.rejects(service.remove("alice",first,{revision:remote.revision+1,fingerprint:quotationFingerprint(remote.quotation)}),/changed on another device/);
+    await assertSucceeds(service.remove("alice",first,{revision:remote.revision,fingerprint:quotationFingerprint(remote.quotation)}));
+    assert.equal((await getDoc(doc(alice,ref))).exists(),false);assert.equal((await getDoc(doc(alice,"users/alice/quotationDrafts/"+other))).exists(),true);
+    await assertSucceeds(service.remove("alice",first,{revision:remote.revision,fingerprint:quotationFingerprint(remote.quotation)}));
   });
   await t.test("shared models remain separate and append-only, and still require verification", async () => {
     const modelId = uuid();

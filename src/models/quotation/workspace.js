@@ -23,7 +23,7 @@ const clone = (value) => structuredClone(value);
 
 export function createQuotationWorkspace({ storage, template, uuid = () => crypto.randomUUID(), delay = 800 }) {
   const listeners = new Set();
-  let timer, epoch = 0, saving = null, identity = null, service = null, canSync = false, disposed = false, needsRestore = false;
+  let timer, epoch = 0, saving = null, deleting = null, identity = null, service = null, canSync = false, disposed = false, needsRestore = false;
   let registry = { version: 1, activeId: null, drafts: {} };
   let remoteDrafts = [];
   let localFailure = false;
@@ -57,7 +57,7 @@ export function createQuotationWorkspace({ storage, template, uuid = () => crypt
     return fresh(isQuotationDraft(legacy) ? legacy : createQuotation(template));
   }
   let guest = guestFromStorage();
-  let state = { ownerUid: null, workspace: guest, status: "local", localSaved: !localFailure, error: "", notice: recoveryNotice, drafts: [], conflict: null };
+  let state = { ownerUid: null, workspace: guest, status: "local", deletingDraftId: null, localSaved: !localFailure, error: "", notice: recoveryNotice, drafts: [], conflict: null };
   let guestView = state;
   const dirty = (workspace) => fingerprint(workspace.quotation) !== workspace.syncedFingerprint;
   const meaningful = (workspace) => fingerprint(workspace.quotation) !== fingerprint(createQuotation(template));
@@ -78,7 +78,7 @@ export function createQuotationWorkspace({ storage, template, uuid = () => crypt
   function cancelTimer() { clearTimeout(timer); }
   function schedule() {
     cancelTimer();
-    if (identity && canSync && service && dirty(state.workspace) && !state.conflict && state.status !== "loading") timer = setTimeout(() => { void save(); }, delay);
+    if (!deleting && identity && canSync && service && dirty(state.workspace) && !state.conflict && state.status !== "loading") timer = setTimeout(() => { void save(); }, delay);
   }
   function fromCloud(remote) {
     return { id: remote.id, quotation: clone(remote.quotation), baseRevision: remote.revision, syncedFingerprint: fingerprint(remote.quotation), mutationId: remote.lastMutationId };
@@ -108,7 +108,7 @@ export function createQuotationWorkspace({ storage, template, uuid = () => crypt
     emit({ status: dirty(workspace) ? "pending" : workspace.baseRevision ? "saved" : "local", error: "", conflict: null }); schedule();
   }
   async function restore() {
-    if (!identity || !canSync || !service) return;
+    if (deleting || !identity || !canSync || !service) return;
     // A focus/online refresh must not invalidate our own in-flight acknowledgement.
     // Let it advance the base revision before comparing with the cloud again.
     if (saving?.epoch === epoch && saving.request) {
@@ -132,7 +132,7 @@ export function createQuotationWorkspace({ storage, template, uuid = () => crypt
     }
   }
   async function save() {
-    if (saving?.epoch === epoch || !identity || !canSync || !service || !dirty(state.workspace) || state.conflict || state.status === "loading") return;
+    if (deleting || saving?.epoch === epoch || !identity || !canSync || !service || !dirty(state.workspace) || state.conflict || state.status === "loading") return;
     cancelTimer();
     const token = epoch, uid = identity, sent = clone(state.workspace), api = service;
     const operation = { epoch: token }; saving = operation;
@@ -185,12 +185,14 @@ export function createQuotationWorkspace({ storage, template, uuid = () => crypt
     if (authorized) void restore();
   }
   function update(value) {
+    if (deleting) return;
     const quotation = typeof value === "function" ? value(state.workspace.quotation) : value;
     if (!isQuotationDraft(quotation)) throw new Error("The quotation could not be updated safely.");
     emit({ workspace: { ...state.workspace, quotation, mutationId: uuid(), preferLatest: false }, status: state.conflict ? "conflict" : state.status === "loading" ? "loading" : identity && canSync ? "pending" : "local" });
     persist(); schedule();
   }
   function open(id) {
+    if (deleting) return;
     const entry = state.drafts.find((draft) => draft.id === id);
     if (!identity || !entry) return;
     cancelTimer(); ++epoch;
@@ -200,11 +202,13 @@ export function createQuotationWorkspace({ storage, template, uuid = () => crypt
     if (canSync) void restore();
   }
   function startNew() {
+    if (deleting) return;
     cancelTimer(); ++epoch;
     if (!identity) for (const key of [DRAFT_STORAGE_KEY, "quoteflow:draft:v3", "quoteflow:draft:v2", "quoteflow:draft:v1"]) { try { storage.removeItem(key); } catch { /* The new namespaced draft remains authoritative. */ } }
     emit({ workspace: fresh(), status: "local", conflict: null, error: "", notice: identity ? "New quotation started. Existing cloud drafts are still available in Saved quotations." : "" }); persist();
   }
   function saveCopy() {
+    if (deleting) return;
     if (!identity) return;
     const previous = state.conflict?.remote;
     if (previous) registry.drafts[previous.id] = fromCloud(previous);
@@ -212,6 +216,7 @@ export function createQuotationWorkspace({ storage, template, uuid = () => crypt
     emit({ workspace: { ...fresh(state.workspace.quotation), syncedFingerprint: "" }, status: "pending", conflict: null, error: "", notice: "Your version is being saved as a separate quotation. The other version is unchanged." }); persist(); schedule();
   }
   async function useCloud() {
+    if (deleting) return;
     if (!identity || !service || !state.conflict) return;
     const token = epoch, id = state.workspace.id, uid = identity;
     try {
@@ -224,10 +229,40 @@ export function createQuotationWorkspace({ storage, template, uuid = () => crypt
       emit({ workspace: fromCloud(remote), status: "saved", conflict: null, error: "", notice: "Cloud version restored. Your local edits are kept as a separate draft on this device." }); persist();
     } catch (cause) { if (token === epoch) emit({ error: cause.message }); }
   }
+  async function deleteDraft(id) {
+    if (deleting) throw new Error("A draft is already being deleted.");
+    if (!identity || !canSync || !service) throw new Error("Sign in with a verified account before deleting a draft.");
+    if (state.status === "loading") throw new Error("Wait for saved documents to finish loading.");
+    if (!state.drafts.some((entry) => entry.id === id)) throw new Error("Choose a saved draft to delete.");
+    const uid=identity, api=service, operation={uid,id};
+    deleting=operation;cancelTimer();emit({deletingDraftId:id});
+    try {
+      // Wait for an already-dispatched save before removing its document so its
+      // acknowledgement cannot recreate a deleted local entry.
+      if (saving?.request) { try { await saving.request; } catch { /* Compare the cloud revision below. */ } }
+      if (uid !== identity || !canSync || disposed) throw new Error("The employee account changed. No local draft was removed.");
+      ++epoch;
+      const cached=registry.drafts[id];
+      const remote=remoteDrafts.find((entry) => entry.id === id);
+      const revision=cached?.baseRevision ?? remote?.revision ?? 0;
+      const expectedFingerprint=cached?.baseRevision ? cached.syncedFingerprint : remote ? fingerprint(remote.quotation) : fingerprint(cached?.quotation ?? state.workspace.quotation);
+      await api.remove(uid,id,{revision,fingerprint:expectedFingerprint});
+      if (uid !== identity || disposed) return;
+      if (cached) finishGuestImport(cached);
+      remoteDrafts=remoteDrafts.filter((entry) => entry.id !== id);
+      const remaining={...registry.drafts};delete remaining[id];
+      registry={...registry,drafts:remaining};
+      const active=state.workspace.id === id;
+      emit({...(active ? {workspace:fresh(),status:"local",conflict:null,error:""} : {}),notice:"Draft deleted. Other saved documents are unchanged."});
+      persist();
+    } finally {
+      if (deleting === operation) { deleting=null;emit({deletingDraftId:null});schedule(); }
+    }
+  }
   return {
     subscribe(listener) { disposed = false; listeners.add(listener); return () => listeners.delete(listener); },
     getSnapshot: () => state, getGuestSnapshot: () => guestView,
-    setSession, update, open, startNew, saveCopy, useCloud, retry: restore, saveNow: save,
+    setSession, update, open, startNew, deleteDraft, saveCopy, useCloud, retry: restore, saveNow: save,
     dispose() { disposed = true; needsRestore = true; cancelTimer(); ++epoch; },
   };
 }
