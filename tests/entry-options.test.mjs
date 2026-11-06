@@ -64,7 +64,7 @@ test("material suggestions retain the actual template standard and have no effec
   assert.deepEqual(materialChoices("rope", template), []);
 });
 
-test("Altis travel count includes Ground and updates only on explicit floor edits", () => {
+test("Cellar convention prints upper-floor travel and includes two base stops", () => {
   assert.equal(altisTotalFloors("4"), "5");
   assert.equal(altisTotalFloors("0"), "1");
   assert.equal(altisTotalFloors(""), "");
@@ -73,13 +73,13 @@ test("Altis travel count includes Ground and updates only on explicit floor edit
   original.lift.project.travelHeight = "G + 4 saved text";
   assert.equal(setDimensionValue(original, "shaft", "width", "1000").lift.project.travelHeight, "G + 4 saved text");
   const standard = setUpperFloors(original, "4");
-  assert.equal(standard.lift.project.travelHeight, "5");
-  assert.equal(standard.lift.project.floors, "Ground + 4 Upper landings – 5 Stops");
+  assert.equal(standard.lift.project.travelHeight, "4");
+  assert.equal(standard.lift.project.floors, "Cellar + Ground + 4 Upper landings – 6 Stops");
   assert.equal(original.lift.project.travelHeight, "G + 4 saved text");
   const custom = setFloorMode(standard, "custom");
   custom.lift.project.travelHeight = "Custom arrangement";
   assert.equal(setUpperFloors(custom, "7").lift.project.travelHeight, "Custom arrangement");
-  assert.equal(setFloorMode(custom, "standard").lift.project.travelHeight, "5");
+  assert.equal(setFloorMode(custom, "standard").lift.project.travelHeight, "4");
 });
 
 test("material choices pin the standard, remove formatting duplicates and retain exact team wording", () => {

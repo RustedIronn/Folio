@@ -2,7 +2,8 @@ import { ALTIS_QUOTATION_TEMPLATE as template } from "../../templates/altisQuota
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const DECIMAL = /^\d+(?:\.\d+)?$/;
-export const MATERIAL_KEYS = template.materials.map(({ key }) => key);
+// Preserve previously saved team options for this installation specification.
+export const MATERIAL_KEYS = [...template.materials.map(({ key }) => key), "landingProtection"];
 
 export function validateEntryOption(input) {
   const errors = {};

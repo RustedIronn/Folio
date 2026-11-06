@@ -16,11 +16,11 @@ test("PDF presentation formats resolved values without changing calculations or 
 });
 
 test("PDF travel prefix preserves missing values and existing custom wording", () => {
-  assert.equal(displayTravelHeight("4"), "G + 4");
-  assert.equal(displayTravelHeight(5), "G + 5");
-  assert.equal(displayTravelHeight("0"), "G + 0");
+  assert.equal(displayTravelHeight("4"), "C + G + 4");
+  assert.equal(displayTravelHeight(5), "C + G + 5");
+  assert.equal(displayTravelHeight("0"), "C + G + 0");
   for (const value of ["", " ", null, undefined]) assert.equal(displayTravelHeight(value), "");
-  for (const value of ["G + 4", "G+4", "Ground + 4 upper floors", "Custom arrangement"]) assert.equal(displayTravelHeight(value), value);
+  for (const value of ["C + G + 4", "Ground + 4 upper floors", "Custom arrangement"]) assert.equal(displayTravelHeight(value), value);
 });
 
 test("PDF dimensions label axes without changing values, units or custom descriptions", () => {

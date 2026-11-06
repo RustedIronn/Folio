@@ -18,7 +18,7 @@ export function getWorkflowProgress(documentData, visited = new Set(), attempted
   documentData.missing.forEach((entry) => missingBySection.get(workflowSectionForPath(entry.path)).push(entry));
   return WORKFLOW_STEPS.map((step) => {
     const missing = missingBySection.get(step.id);
-    const required = step.id === "materials" ? documentData.pages.materials.rows.reduce((count,row) => count + (row.optional ? 0 : row.source === "custom" ? 2 : 1), 0) : REQUIRED_COUNTS[step.id] + (step.id === "commercial" && documentData.pages.priceSchedule.additionalEntryPresent ? 2 : 0);
+    const required = step.id === "materials" ? documentData.pages.materials.rows.reduce((count,row) => count + (row.optional ? 0 : row.source === "custom" ? 2 : 1), 0) : REQUIRED_COUNTS[step.id] + (step.id === "commercial" && documentData.pages.priceSchedule.additionalEntryPresent ? 2 : 0) + (step.id === "commercial" && documentData.pages.priceSchedule.bankDetailsCustom ? 4 : 0);
     const completed = Math.max(0, required - missing.length);
     let state = "not-started";
     if (step.id === currentStep) state = "current";

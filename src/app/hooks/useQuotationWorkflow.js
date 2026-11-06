@@ -99,7 +99,8 @@ export function useQuotationWorkflow() {
     visitStep(step, true);
     const customMaterial = entry.path.match(/^materials\.customRows\.(\d+)(?:\.(name|value))?$/);
     const customRow = customMaterial && quotation.materials.customRows?.[Number(customMaterial[1])];
-    const target = customRow ? `custom-material-${customRow.id}-${customMaterial[2] || "name"}` : entry.path === "reference.officeCode" && quotation.reference.officeCodeMode === "custom" ? "custom-office-code" : entry.path === "lift.project.floors" && quotation.lift.installation.floorMode === "custom" ? "custom-floors" : entry.path === "lift.project.landings" && quotation.lift.installation.floorMode === "custom" ? "custom-landings" : FIELD_TARGETS[entry.path] || step;
+    const dynamicTarget = entry.path.startsWith("commercial.warrantyPeriods.") ? "warranty-"+entry.path.split(".").at(-1) : entry.path.startsWith("commercial.bankDetails.") ? "bank-"+entry.path.split(".").at(-1) : entry.path === "lift.technicalOverrides.buzzer" ? "technical-buzzer" : null;
+    const target = dynamicTarget || (customRow ? `custom-material-${customRow.id}-${customMaterial[2] || "name"}` : entry.path === "reference.officeCode" && quotation.reference.officeCodeMode === "custom" ? "custom-office-code" : entry.path === "lift.project.floors" && quotation.lift.installation.floorMode === "custom" ? "custom-floors" : entry.path === "lift.project.landings" && quotation.lift.installation.floorMode === "custom" ? "custom-landings" : FIELD_TARGETS[entry.path] || step);
     window.setTimeout(() => focusWorkflowField(target), 0);
   }
   function openTechnicalField(key) {

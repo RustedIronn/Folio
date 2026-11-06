@@ -27,6 +27,7 @@ export const ALTIS_QUOTATION_TEMPLATE = {
     powerSupplyLiftWell: "1 phase, 230 V, 50 cycles AC.",
     safety: "Emergency alarm, emergency stop, floor indication, and up/down arrows.",
     facePlate: "Stainless-steel push box covers with buttons.",
+    buzzer: "Automatic door opening voice buzzer (P C D).",
   },
   materials: [
     { key: "controlPanel", label: "Control Panel", source: "technical", technicalKey: "controller" },
@@ -40,7 +41,7 @@ export const ALTIS_QUOTATION_TEMPLATE = {
     { key: "security", label: "Security", defaultValue: "Alarm, overspeed governor and buffer springs." },
     { key: "motors", label: "Motors", source: "technical", technicalKey: "motor" },
     { key: "guideRails", label: "Guide rails", defaultValue: "Italian-made (imported)" },
-    { key: "landingProtection", label: "Landing protection", source: "technical", technicalKey: "landingProtection", optional: true },
+    { key: "rcr", label: "RCR", defaultValue: "", optional: true },
     { key: "autoRescueDevice", label: "Auto Rescue Device", defaultValue: "", optional: true },
   ],
   commercial: {
@@ -55,6 +56,7 @@ export const ALTIS_QUOTATION_TEMPLATE = {
       { key: "completion", percentage: "10", description: "of the contract value immediately on completion." },
     ],
   },
+  bankAccounts: [{ id: "icici-vijayawada", label: "ICICI · Bharati Nagar, Vijayawada", accountName: "ALTIS ELEVATORS", accountNumber: "665205500135", bankName: "ICICI Bank, Bharati Nagar Branch, Vijayawada", ifsc: "ICIC0006652" }],
   warranty: {
     title: "WARRANTY",
     sections: [
@@ -74,7 +76,7 @@ export const ALTIS_QUOTATION_TEMPLATE = {
       "Inspection/Servicing of the lift periodically or as and when required to ensure trouble free performance of the lift during the guarantee period and subsequently on Annual Service and Maintenance Contract basis.",
     ],
     customer: [
-      "To complete the civil work like lift shaft, scaffolding, machine room Pit & Sil bearing areas as per drawings/advice of our erection engineer, duly finished & Painted/White washed.",
+      "To complete the civil work like electrical work and earth pit, lift shaft, scaffolding, machine room Pit & Sil bearing areas as per drawings/advice of our erection engineer, duly finished & Painted/White washed.",
       "To provide safe lockable and weather proof materials storage and technicians utilization accommodation in ground or 1st Floor, Safety of materials and tools to be ensured at site.",
       "To keep the lift shaft, machine room, shaft and the surrounding areas as required by our engineer/technicians.",
       "To provide 230v lighting in machine room, shaft and the surrounding areas as required by our engineer/technicians.",

@@ -104,7 +104,7 @@ test("review and resolver use the same effective data", () => {
   assert.equal(resolved.missing.length, 0);
   assert.equal(resolved.pages.cover.reference, composeReference(quote.reference, template));
 });
-test("resolved document maps the standard and landing-protection material rows and commercial output", () => {
+test("resolved document maps standard material rows and optional RCR and commercial output", () => {
   const resolved = resolveQuotationDocument(completeQuote(), catalogue, template);
   assert.equal(resolved.pages.materials.rows.length, 13);
   assert.equal(resolved.pages.materials.rows.find((row) => row.key === "rope").value, record.technical.rope);
@@ -129,8 +129,8 @@ test("structured floors and dimensions populate the existing PDF project fields"
   quote = setDimensionValue(quote, "car", "width", "1100");
   quote = setDimensionValue(quote, "car", "depth", "1400");
   quote = setDimensionValue(quote, "car", "height", "2200");
-  assert.equal(quote.lift.project.floors, "Ground + 4 Upper landings – 5 Stops");
-  assert.equal(quote.lift.project.landings, "Ground + 4 Upper landings – 5 Stops");
+  assert.equal(quote.lift.project.floors, "Cellar + Ground + 4 Upper landings – 6 Stops");
+  assert.equal(quote.lift.project.landings, "Cellar + Ground + 4 Upper landings – 6 Stops");
   assert.equal(quote.lift.project.shaftMeasurement, "1600 × 1500 mm");
   assert.equal(quote.lift.project.carSize, "1100 × 1400 × 2200 mm");
   assert.equal(formatDimensions(["800", "2100"]), "800 × 2100 mm");

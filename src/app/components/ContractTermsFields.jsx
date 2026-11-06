@@ -1,0 +1,21 @@
+import { useState } from "react";
+import Field from "./Field.jsx";
+import Select from "./Select.jsx";
+import Button from "./Button.jsx";
+import { guaranteePeriods, setGuaranteePeriod, WARRANTY_PERIODS } from "../../models/quotation/contractTerms.js";
+
+export function GuaranteeFields({quotation,template,update,errors}) {
+  const [custom,setCustom]=useState(false);
+  const text=quotation.commercial.guarantee;
+  const periods=guaranteePeriods(text);
+  return <div className="span-two contract-term-editor"><div className="configuration-heading-row"><h3>Guarantee</h3><Button variant="tertiary" onClick={()=>{if(custom || !periods){update("commercial","guarantee",template.commercial.guarantee);setCustom(false);}else setCustom(true);}}>{custom || !periods ? "Use standard wording" : "Custom wording"}</Button></div>{custom || !periods ? <Field id="guarantee" label="Guarantee wording" required error={errors("commercial.guarantee")}><textarea id="guarantee" rows="3" maxLength={320} value={text} onChange={(event)=>update("commercial","guarantee",event.target.value)}/></Field> : <><div className="form-grid">{[["commissioningMonths","From commissioning (months)"],["dispatchMonths","From dispatch (months)"]].map(([key,label],index)=><Field key={key} id={index === 0 ? "guarantee" : "guarantee-dispatch"} label={label} required error={index === 0 ? errors("commercial.guarantee") : undefined}><input id={index === 0 ? "guarantee" : "guarantee-dispatch"} type="number" min="1" max="9999" step="1" inputMode="numeric" value={periods[key]} onChange={(event)=>update("commercial","guarantee",setGuaranteePeriod(text,key,event.target.value))}/></Field>)}</div><p className="contract-wording-preview">{text}</p></>}</div>;
+}
+export function WarrantyFields({quotation,resolved,update,errors}) {
+  const periods=quotation.commercial.warrantyPeriods ?? {};
+  return <details className="detail-panel commercial-details"><summary>Warranty & free service <span>Quotation-specific periods</span></summary><div className="commercial-detail-grid">{WARRANTY_PERIODS.map((field)=><Field key={field.key} id={"warranty-"+field.key} label={field.label} error={errors("commercial.warrantyPeriods."+field.key)}><input id={"warranty-"+field.key} type="number" min="1" max="9999" step="1" inputMode="numeric" value={periods[field.key] ?? field.value} onChange={(event)=>update("commercial","warrantyPeriods",{...periods,[field.key]:event.target.value})}/></Field>)}<p className="contract-wording-preview span-two">{resolved.pages.warranty.sections[0][1].split(" and our liability")[0]}</p><p className="contract-wording-preview span-two">{resolved.pages.warranty.sections[1][1]}</p></div></details>;
+}
+export function BankDetailsFields({quotation,template,resolved,update,errors}) {
+  const bank=quotation.commercial.bankDetails ?? {mode:"standard",selectedId:template.bankAccounts[0].id,custom:{}};
+  const custom=bank.custom ?? {};
+  return <section className="payment-panel bank-details-panel"><header className="screen-panel-heading"><div><h3>Bank details</h3></div></header><Field id="bank-account" label="Payment account"><Select id="bank-account" value={bank.mode === "custom" ? "custom" : bank.selectedId} options={[...template.bankAccounts.map((account)=>({value:account.id,label:account.label})),{value:"custom",label:"Custom bank details"}]} onChange={(value)=>update("commercial","bankDetails",{...bank,mode:value === "custom" ? "custom" : "standard",selectedId:value === "custom" ? bank.selectedId : value})}/></Field>{bank.mode === "custom" ? <div className="form-grid">{[["accountName","Account name",80],["accountNumber","Account number",40],["bankName","Bank and branch",100],["ifsc","IFSC",20]].map(([key,label,maxLength])=><Field key={key} id={"bank-"+key} label={label} required error={errors("commercial.bankDetails."+key)}><input id={"bank-"+key} maxLength={maxLength} value={custom[key] ?? ""} onChange={(event)=>update("commercial","bankDetails",{...bank,custom:{...custom,[key]:event.target.value}})}/></Field>)}</div> : <dl className="bank-details-preview">{[["Account name","accountName"],["Account number","accountNumber"],["Bank and branch","bankName"],["IFSC","ifsc"]].map(([label,key])=><div key={key}><dt>{label}</dt><dd>{resolved.pages.priceSchedule.bankDetails[key]}</dd></div>)}</dl>}</section>;
+}

@@ -1,4 +1,5 @@
 import { documentIdentity, extensionDefaults, MAX_CUSTOM_MATERIALS } from "./quotationExtensions.js";
+import { guaranteePeriods, resolveBankDetails, resolveWarrantySections, WARRANTY_PERIODS } from "./contractTerms.js";
 import { isSharedModel } from "../catalogue/sharedModels.js";
 
 export const QUOTATION_SCHEMA_VERSION = 4;
@@ -10,7 +11,7 @@ export const PROJECT_FIELDS = [
 ];
 
 const emptyInstallation = () => ({
-  floorMode: "standard", upperFloors: "", customFloors: "", customLandings: "",
+  floorMode: "standard", cellarConvention: true, upperFloors: "", customFloors: "", customLandings: "",
   shaft: { mode: "structured", width: "", depth: "", custom: "" },
   car: { mode: "structured", width: "", depth: "", height: "", custom: "" },
   cabinOpening: { mode: "structured", width: "", height: "", custom: "" },
@@ -24,7 +25,7 @@ export function createQuotation(template) {
     customer: { name: "", address: "", salutation: "", otherSalutation: "", attentionName: "", projectLocation: "", subjectMode: "supplyLift", subjectCustom: "" },
     lift: { catalogueId: "", catalogueSourceRow: null, quantity: "1", technicalOverrides: {}, project: { ...Object.fromEntries(PROJECT_FIELDS.map(([key]) => [key, ""])), passengerCount: "", maximumLoadKg: "" }, installation: emptyInstallation() },
     materials: { overrides: {}, customRows: [] },
-    commercial: { additionalEntry: { label: "", value: "" }, priceAmount: "", taxDescription: template.commercial.taxDescription, packingForwarding: template.commercial.packingForwarding, delivery: template.commercial.delivery, transportOctroi: template.commercial.transportOctroi, guarantee: template.commercial.guarantee, payment: Object.fromEntries(template.commercial.paymentStages.map((stage) => [stage.key, stage.percentage])) },
+    commercial: { warrantyPeriods: {}, bankDetails: {mode:"standard",selectedId:template.bankAccounts[0].id,custom:{accountName:"",accountNumber:"",bankName:"",ifsc:""}}, additionalEntry: { label: "", value: "" }, priceAmount: "", taxDescription: template.commercial.taxDescription, packingForwarding: template.commercial.packingForwarding, delivery: template.commercial.delivery, transportOctroi: template.commercial.transportOctroi, guarantee: template.commercial.guarantee, payment: Object.fromEntries(template.commercial.paymentStages.map((stage) => [stage.key, stage.percentage])) },
     document: { type: "quotation", acceptanceName: "", acceptanceDate: "" },
   };
 }
@@ -41,7 +42,7 @@ export function formatDimensions(values) {
 export function standardFloorDescription(upperFloors) {
   if (!/^\d+$/.test(String(upperFloors ?? ""))) return "";
   const upper = Number(upperFloors);
-  return upper === 0 ? "Ground floor – 1 Stop" : `Ground + ${upper} Upper landings – ${upper + 1} Stops`;
+  return `Cellar + Ground + ${upper} Upper landings – ${upper + 2} Stops`;
 }
 function withInstallationProject(next) {
   const installation = next.lift.installation;
@@ -60,7 +61,7 @@ function withInstallationProject(next) {
 }
 export function setFloorMode(quotation, mode) {
   const next = structuredClone(quotation); next.lift.installation.floorMode = mode;
-  if (mode === "standard") next.lift.project.travelHeight = altisTotalFloors(next.lift.installation.upperFloors);
+  if (mode === "standard") next.lift.project.travelHeight = /^\d+$/.test(String(next.lift.installation.upperFloors)) ? String(next.lift.installation.upperFloors) : "";
   return withInstallationProject(next);
 }
 export function altisTotalFloors(upperFloors) {
@@ -68,7 +69,7 @@ export function altisTotalFloors(upperFloors) {
 }
 export function setUpperFloors(quotation, value) {
   const next = structuredClone(quotation); next.lift.installation.upperFloors = value;
-  if (next.lift.installation.floorMode === "standard") next.lift.project.travelHeight = altisTotalFloors(value);
+  if (next.lift.installation.floorMode === "standard") next.lift.project.travelHeight = /^\d+$/.test(String(value)) ? String(value) : "";
   return withInstallationProject(next);
 }
 export function setCustomFloorValue(quotation, key, value) {
@@ -155,6 +156,7 @@ export function selectedConfiguration(quotation, catalogue) {
 export function resolveQuotationDocument(quotation, catalogue, template) {
   const identity = documentIdentity(quotation.document?.type);
   const record = selectedConfiguration(quotation, catalogue);
+  quotation = extensionDefaults(quotation, template);
   const technical = technicalValues(quotation, record, template);
   const materials = Object.fromEntries(template.materials.map((item) => [item.key, materialValue(quotation, item, technical)]));
   const missing = [];
@@ -191,6 +193,16 @@ export function resolveQuotationDocument(quotation, catalogue, template) {
     if (!String(additional.label ?? "").trim() || String(additional.label).length > 40) missing.push({ path: "commercial.additionalEntry.label", label: "Enter an additional commercial label of 1–40 characters" });
     if (!String(additional.value ?? "").trim() || String(additional.value).length > 120) missing.push({ path: "commercial.additionalEntry.value", label: "Enter an additional commercial value of 1–120 characters" });
   }
+  const warrantyPeriods = quotation.commercial.warrantyPeriods ?? {};
+  for (const field of WARRANTY_PERIODS) if (warrantyPeriods[field.key] !== undefined && !/^[1-9]\d{0,3}$/.test(String(warrantyPeriods[field.key]))) missing.push({path:"commercial.warrantyPeriods."+field.key,label:field.label+" must be a positive whole number of up to four digits"});
+  const guarantee = guaranteePeriods(quotation.commercial.guarantee);
+  if (guarantee) for (const value of Object.values(guarantee)) if (!/^[1-9]\d{0,3}$/.test(value)) { missing.push({path:"commercial.guarantee",label:"Guarantee periods must be positive whole numbers of up to four digits"}); break; }
+  const bankDetails = resolveBankDetails(quotation.commercial,template);
+  if (quotation.commercial.bankDetails?.mode === "custom") for (const [key,label,limit] of [["accountName","Account name",80],["accountNumber","Account number",40],["bankName","Bank and branch",100],["ifsc","IFSC",20]]) {
+    const value=bankDetails[key];
+    if(typeof value !== "string" || !value.trim() || value.length > limit) missing.push({path:"commercial.bankDetails."+key,label:"Enter "+label.toLowerCase()+" (up to "+limit+" characters)"});
+  }
+  if (String(technical.buzzer ?? "").length > 180) missing.push({path:"lift.technicalOverrides.buzzer",label:"Buzzer wording exceeds the PDF limit of 180 characters"});
   const price = Number(quotation.commercial.priceAmount);
   const paymentTotal = Object.values(quotation.commercial.payment).reduce((sum, value) => sum + Number(value || 0), 0);
   const passengerCount = String(quotation.lift.project.passengerCount ?? "").trim();
@@ -209,8 +221,8 @@ export function resolveQuotationDocument(quotation, catalogue, template) {
     pages: {
       cover: { documentLabel: identity.label, company: template.company, reference: composeReference(quotation.reference, template, identity.type), date: quotation.metadata.date, customer: quotation.customer, attention: composeAttention(quotation.customer), subject: composeSubject(quotation.customer, identity.type), letter: template.coverLetter },
       installation: { quantity: quotation.lift.quantity, quantityType: record?.quantityType ?? "", quantityAndType: composeQuantityAndType(quotation.lift.quantity, record?.quantityType ?? ""), technical, project: { ...quotation.lift.project, capacity: composeCapacity(quotation.lift.project) }, carDesign: materials.cabin, footer: { date: quotation.metadata.date, ...template.signatures } },
-      priceSchedule: { quantity: quotation.lift.quantity, capacity: composeCapacity(quotation.lift.project), projectLocation: quotation.customer.projectLocation, documentLabel: identity.label, additionalEntryPresent: hasAdditional, additionalEntry: hasAdditional && String(additional.label ?? "").trim() && String(additional.value ?? "").trim() ? { label: String(additional.label).trim(), value: String(additional.value).trim() } : null, price: documentPrice(quotation.commercial.priceAmount, quotation.lift.quantity), taxDescription: quotation.commercial.taxDescription, packingForwarding: quotation.commercial.packingForwarding, delivery: quotation.commercial.delivery, transportOctroi: quotation.commercial.transportOctroi, guarantee: quotation.commercial.guarantee, payment: template.commercial.paymentStages.map((stage) => ({ ...stage, percentage: quotation.commercial.payment[stage.key] })), acceptance: quotation.document, footer: { date: quotation.metadata.date, ...template.signatures } },
-      warranty: { ...template.warranty, footer: { date: quotation.metadata.date, ...template.signatures } },
+      priceSchedule: { quantity: quotation.lift.quantity, capacity: composeCapacity(quotation.lift.project), projectLocation: quotation.customer.projectLocation, documentLabel: identity.label, additionalEntryPresent: hasAdditional, additionalEntry: hasAdditional && String(additional.label ?? "").trim() && String(additional.value ?? "").trim() ? { label: String(additional.label).trim(), value: String(additional.value).trim() } : null, price: documentPrice(quotation.commercial.priceAmount, quotation.lift.quantity), taxDescription: quotation.commercial.taxDescription, packingForwarding: quotation.commercial.packingForwarding, delivery: quotation.commercial.delivery, transportOctroi: quotation.commercial.transportOctroi, guarantee: quotation.commercial.guarantee, bankDetails, bankDetailsCustom: quotation.commercial.bankDetails?.mode === "custom", payment: template.commercial.paymentStages.map((stage) => ({ ...stage, percentage: quotation.commercial.payment[stage.key] })), acceptance: quotation.document, footer: { date: quotation.metadata.date, ...template.signatures } },
+      warranty: { ...template.warranty, sections: resolveWarrantySections(template,warrantyPeriods), footer: { date: quotation.metadata.date, ...template.signatures } },
       materials: { rows: [...template.materials.map((item) => ({ ...item, value: materials[item.key] })), ...customRows.map((row, index) => ({ key: "custom-" + (row.id || index), id: row.id, label: typeof row.name === "string" ? row.name : "", value: typeof row.value === "string" ? row.value : "", source: "custom", optional: false }))], footer: { date: quotation.metadata.date, ...template.signatures } },
       obligations: { ...template.obligations, footer: { date: quotation.metadata.date, ...template.signatures } },
     },
@@ -276,7 +288,7 @@ function migrateVersionThree(old, template) {
 }
 export function migrateDraft(draft, template) {
   if (!draft?.quotation) return null;
-  if (draft.schemaVersion === QUOTATION_SCHEMA_VERSION) return extensionDefaults(draft.quotation);
+  if (draft.schemaVersion === QUOTATION_SCHEMA_VERSION) return extensionDefaults(draft.quotation, template);
   if (draft.schemaVersion === 3) return migrateVersionThree(draft.quotation, template);
   if (draft.schemaVersion === 2) return migrateVersionTwo(draft.quotation, template);
   if (draft.schemaVersion !== 1) return null;

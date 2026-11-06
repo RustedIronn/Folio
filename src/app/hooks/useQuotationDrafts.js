@@ -1,3 +1,4 @@
+import { extensionDefaults } from "../../models/quotation/quotationExtensions.js";
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { createQuotationWorkspace } from "../../models/quotation/workspace.js";
 import { quotationDraftsService } from "../../services/quotationDrafts.js";
@@ -21,10 +22,13 @@ export default function useQuotationDrafts(session) {
   }, [manager]);
   // Hide the previous employee's data immediately, before transition effects run.
   const visible = state.ownerUid === uid ? state : manager.getGuestSnapshot();
+  // Normalize additive document options for local and cloud drafts without writing
+  // a remote revision until the employee actually edits the document.
+  const quotation = useMemo(() => extensionDefaults(visible.workspace.quotation, template), [visible.workspace.quotation]);
   function setQuotation(value) {
     manager.setSession({ uid, authorized, api });
-    manager.update(value);
+    manager.update((current) => typeof value === "function" ? value(extensionDefaults(current, template)) : extensionDefaults(value, template));
   }
   function startNew() { manager.setSession({ uid, authorized, api }); manager.startNew(); }
-  return { ...visible, manager, startNew, quotation: visible.workspace.quotation, setQuotation };
+  return { ...visible, manager, startNew, quotation, setQuotation };
 }

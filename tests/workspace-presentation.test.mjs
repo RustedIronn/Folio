@@ -187,3 +187,20 @@ test("commercial editor and Review show each without a combined-total label", ()
   assert.ok(commercial.includes("Price per lift"));
   assert.equal(quotation.commercial.priceAmount,"500000");
 });
+
+ test("landing protection has one visible installation control outside advanced adjustments", () => {
+  const workflow=entryWorkflow(setTechnicalOverride(sampleQuotation(),"landingProtection","Synthetic landing adjustment",catalogue,template));
+  const html=renderToStaticMarkup(React.createElement(LiftStep,{workflow}));
+  assert.equal((html.match(/id="technical-landingProtection"/g)||[]).length,1);
+  assert.ok(html.indexOf('id="technical-landingProtection"') < html.indexOf('class="detail-panel lift-advanced-panel"'));
+  assert.ok(html.includes("Synthetic landing adjustment"));
+  assert.ok(!workflow.resolved.pages.materials.rows.some((row) => row.key === "landingProtection"));
+});
+
+test("revised commercial controls show numeric terms, bank selection and custom bank fields",()=>{
+ const q=sampleQuotation();let html=renderToStaticMarkup(React.createElement(CommercialStep,{workflow:entryWorkflow(q)}));
+ for(const id of ["guarantee","guarantee-dispatch","warranty-handoverYears","warranty-dispatchMonths","warranty-serviceIntervalDays","warranty-freeServiceMonths","bank-account"])assert.ok(html.includes('id="'+id+'"'),id);
+ q.commercial.bankDetails={mode:"custom",selectedId:"icici-vijayawada",custom:{accountName:"Synthetic business",accountNumber:"001234",bankName:"Synthetic bank",ifsc:"TEST0000123"}};
+ html=renderToStaticMarkup(React.createElement(CommercialStep,{workflow:entryWorkflow(q)}));
+ for(const key of ["accountName","accountNumber","bankName","ifsc"])assert.ok(html.includes('id="bank-'+key+'"'));
+});

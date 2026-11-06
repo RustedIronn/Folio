@@ -23,7 +23,7 @@ export function displayCapacity(capacity) {
 
 export function displayTravelHeight(value) {
   const travel = String(value ?? "").trim();
-  return /^\d+$/.test(travel) ? `G + ${travel}` : travel;
+  return /^\d+$/.test(travel) ? `C + G + ${travel}` : /^G\s*\+\s*\d+$/.test(travel) ? `C + ${travel}` : travel;
 }
 
 export function displayDimensions(value, axes) {

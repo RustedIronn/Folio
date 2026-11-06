@@ -6,6 +6,7 @@ export const CAPACITY_OPTIONS = [4, 5, 6, 8, 10, 12, 13, 15, 16, 20, 22].map((pe
 });
 
 const MATERIAL_CHOICES = {
+  rcr: ["hydraulic type"],
   cabin: ["SS Cabin", "MS Cabin", "SS Cabin with Mirror Finish", "SS Cabin with Toughened Glass Left & Right Sides"],
   lopCop: ["Square and round buttons with lights; wall-mounted S.S. face plates.", "Touch Panel"],
   security: ["Alarm and buffer springs", "Alarm, overspeed governor and buffer springs.", "Alarm", "Overspeed governor"],
@@ -60,7 +61,7 @@ const TECHNICAL_CHOICE_KEYS = new Set(["speed", "doorFrame", "carProtectionDoor"
 
 export function technicalChoices(key, catalogue, sharedRecords = [], template) {
   if (!TECHNICAL_CHOICE_KEYS.has(key)) return [];
-  const materialKey = template?.materials.find((row) => row.source === "technical" && row.technicalKey === key)?.key;
+  const materialKey = key === "landingProtection" ? "landingProtection" : template?.materials.find((row) => row.source === "technical" && row.technicalKey === key)?.key;
   const shared = sharedRecords.filter((row) => row.kind === "material" && row.materialKey === materialKey).map((row) => row.specification);
   const approved = catalogue.records.map((record) => record.technical[key]).filter((value) => typeof value === "string" && value.trim() && (key !== "rope" || /^\d+(?:\.\d+)? mm\b/.test(value)));
   return orderedChoices([...approved, ...shared]);

@@ -21,7 +21,9 @@ test("team capacities validate explicit numeric pairs and normalize formatting w
 });
 
 test("shared material options validate standard rows and printable specifications", () => {
-  assert.deepEqual(MATERIAL_KEYS, template.materials.map((row) => row.key));
+  assert.deepEqual(MATERIAL_KEYS, [...template.materials.map((row) => row.key), "landingProtection"]);
+  const savedLanding = entryOptionRecord({id,kind:"material",materialKey:"landingProtection",specification:"Synthetic team landing protection"});
+  assert.ok(technicalChoices("landingProtection",catalogue,[savedLanding],template).some((row) => row.value === savedLanding.specification));
   for (const materialKey of MATERIAL_KEYS) assert.deepEqual(validateEntryOption({ ...material, materialKey }), {});
   assert.ok(validateEntryOption({ ...material, materialKey: "customer" }).materialKey);
   for (const specification of ["", "  ", "x".repeat(181)]) assert.ok(validateEntryOption({ ...material, specification }).specification);

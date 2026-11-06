@@ -113,6 +113,8 @@ test("Firestore rules: private employee drafts, verified access, revision checks
     for(const db of [anon,pending]) await assertFails(getDoc(doc(db,`quotationOptions/${optionId}`)));
     const landingId=uuid();
     await assertSucceeds(setDoc(doc(alice,`quotationOptions/${landingId}`),{...entryOptionPayload({kind:"material",materialKey:"landingProtection",specification:"Synthetic landing protection"},landingId),created_by:"alice",created_at:serverTimestamp()}));
+    const rcrId=uuid();
+    await assertSucceeds(setDoc(doc(alice,`quotationOptions/${rcrId}`),{...entryOptionPayload({kind:"material",materialKey:"rcr",specification:"Synthetic hydraulic type"},rcrId),created_by:"alice",created_at:serverTimestamp()}));
     const draftId=uuid();const agreement=data();agreement.quotation.document.type="agreement";agreement.quotation.reference.officeCode="TEST";agreement.quotation.materials.customRows=[{id:optionId,name:"Synthetic trim",value:"Synthetic finish"}];agreement.quotation.commercial.additionalEntry={label:"Site note",value:"Information only"};
     await assertSucceeds(setDoc(doc(alice,`users/alice/quotationDrafts/${draftId}`),agreement));
     await assertFails(getDoc(doc(bob,`users/alice/quotationDrafts/${draftId}`)));

@@ -74,13 +74,14 @@ test("multiple quantities append each without changing entered amounts or inform
   assert.ok(resolve(q).missing.some((entry) => entry.path === "commercial.additionalEntry.label"));
 });
 
-test("landing protection resolves from the catalogue and stays synchronized with technical overrides", () => {
+test("landing protection stays in installation only and overrides survive draft restoration", () => {
   const original = sampleQuotation();const doc = resolve(original);
-  const row = doc.pages.materials.rows.find((entry) => entry.key === "landingProtection");
-  assert.equal(row.value, doc.pages.installation.technical.landingProtection);assert.ok(row.value);
+  assert.ok(doc.pages.installation.technical.landingProtection);
+  assert.ok(!doc.pages.materials.rows.some((entry) => entry.key === "landingProtection"));
   const q = setTechnicalOverride(original,"landingProtection","Synthetic landing protection",quotationCatalogue(catalogue,[],original),template);
-  assert.equal(resolve(q).pages.materials.rows.find((entry) => entry.key === "landingProtection").value, "Synthetic landing protection");
-  assert.equal(resolve(q).pages.installation.technical.landingProtection, "Synthetic landing protection");
+  const restored = restoreDraft(serializeDraft(q),template);
+  assert.equal(resolve(restored).pages.installation.technical.landingProtection, "Synthetic landing protection");
+  assert.ok(!resolve(restored).pages.materials.rows.some((entry) => entry.key === "landingProtection"));
 });
 
 test("custom material names validate, survive serialization and stay outside the catalogue", () => {
@@ -114,9 +115,11 @@ for (const type of ["quotation","agreement"]) for (const variant of ["branded","
     assert.equal(result.layout.children.length,6);
     const text = collect(result.layout);
     assert.ok(text.includes(type === "agreement" ? "AE/AGE/" : "AE/QUO/"));
-    for (const expected of ["Synthetic trim","Employee-entered finish","Landing protection","Site note:","Synthetic entry; total unchanged","Rs. 7,50,000/- each","W 1800 mm × D 1650 mm"]) assert.ok(text.includes(expected),expected);
+    for (const expected of ["Synthetic trim","Employee-entered finish","Type of Landing protection:","Site note:","Synthetic entry; total unchanged","Rs. 7,50,000/- each","W 1800 mm × D 1650 mm"]) assert.ok(text.includes(expected),expected);
     assert.ok(!text.includes("undefined"));assert.ok(text.includes("Rupees Seven Lakh Fifty Thousand Only each"));assert.ok(!text.includes("total for"));
     const installation = result.layout.children[1];
+    assert.ok(collect(installation).includes("Type of Landing protection:"));
+    assert.ok(!collect(result.layout.children[4]).includes("Landing protection"));
     function findBold(node) { return (node.type === "TEXT" && collect(node).includes(result.documentData.pages.installation.quantityAndType) && node.style?.fontFamily === "Times-Bold") || (node.children ?? []).some(findBold); }
     assert.ok(findBold(installation),"Lift model description uses the bold PDF font");
     assert.ok(text.includes("Executive Signature:"));

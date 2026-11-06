@@ -27,11 +27,24 @@ export function removeCustomMaterial(quotation, id) {
 }
 
 // Additive v4 defaults; old fields, snapshots and explicitly customized values stay exact.
-export function extensionDefaults(quotation) {
-  return { ...quotation,
+export function extensionDefaults(quotation, template) {
+  let lift=quotation.lift;
+  const installation=lift?.installation;
+  if(installation && !installation.cellarConvention) {
+    const project={...lift.project};
+    if(installation.floorMode === "standard" && /^\d+$/.test(String(installation.upperFloors))) {
+      const upper=Number(installation.upperFloors);
+      const oldDescription=upper === 0 ? "Ground floor – 1 Stop" : "Ground + "+upper+" Upper landings – "+(upper+1)+" Stops";
+      const description="Cellar + Ground + "+upper+" Upper landings – "+(upper+2)+" Stops";
+      for(const key of ["floors","landings"]) if(project[key] === oldDescription) project[key]=description;
+      if(String(project.travelHeight) === String(upper+1)) project.travelHeight=String(upper);
+    }
+    lift={...lift,project,installation:{...installation,cellarConvention:true}};
+  }
+  return { ...quotation, lift,
     reference: { officeCodeMode: quotation.reference?.officeCode && quotation.reference.officeCode !== "VJA" ? "custom" : "standard", customOfficeCode: "", ...quotation.reference },
     materials: { customRows: [], ...quotation.materials },
-    commercial: { additionalEntry: { label: "", value: "" }, ...quotation.commercial },
+    commercial: { warrantyPeriods: {}, ...(template?.bankAccounts ? {bankDetails:{mode:"standard",selectedId:template.bankAccounts[0].id,custom:{accountName:"",accountNumber:"",bankName:"",ifsc:""}}} : {}), additionalEntry: { label: "", value: "" }, ...quotation.commercial },
     document: { type: "quotation", ...quotation.document },
   };
 }

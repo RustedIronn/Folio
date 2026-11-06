@@ -78,24 +78,25 @@ function InstallationPage({ page, ...props }) {
       <View style={[s.table, { borderTopWidth: 0, flexDirection: "row", minHeight: 41 }]}><View style={[s.label, { justifyContent: "space-between" }]}><Text>Power Supply: M/C ROOM</Text><Text>LIFT WELL:</Text></View><View style={[s.value, { justifyContent: "space-between" }]}><Text>{safe(t.powerSupplyMachineRoom)}</Text><Text>{safe(t.powerSupplyLiftWell)}</Text></View><View style={[s.tableOutline, { borderTopWidth: 0 }]} /></View>
     </Region>
     <Region name="Additional features heading" top={602} height={17}><Text style={s.bold}>ADDITIONAL FEATURES AS FOR SITE REQUIREMENT</Text></Region>
-    <Region name="Additional features" left={66.4} top={628.7} width={443.4} height={90}><KeyValueTable rows={[["Safety", t.safety, 41], ["Face Plate", t.facePlate, 27.5]]} /></Region>
+    <Region name="Additional features" left={66.4} top={620} width={443.4} height={110}><KeyValueTable rows={[["Safety", t.safety, 33], ["Face Plate", t.facePlate, 27.5], ["Buzzer", t.buzzer, 35]]} /></Region>
   </PdfPage>;
 }
 function PricePage({ page, ...props }) {
-  const extraOffset = page.additionalEntry ? 30 : 0;
+  const extraOffset = page.additionalEntry ? 26 : 0;
   const terms = [["Taxes", page.taxDescription], ["Packing Forwarding Charges", page.packingForwarding], ["Delivery", page.delivery], ["Transport charges & Octroy", page.transportOctroi], ["Guarantee", page.guarantee]];
   return <PdfPage page={page} {...props}><Heading top={109}>{page.documentLabel === "Agreement" ? "AGREEMENT - PRICE SCHEDULE" : "PRICE SCHEDULE"}</Heading>
     <Region name="Price salutation" top={149} height={20}><Text>Dear Sir,</Text></Region>
     <Region name="Price introduction" top={176} height={43}><Text style={[s.text, { textAlign: "justify", textIndent: 57 }]}>We agree to supply, deliver all the required materials and to install {safe(page.quantity)} No of “Altis Elevator” {displayCapacity(page.capacity)} Capacity Passenger Elevators for your Building at, {safe(page.projectLocation)}.</Text></Region>
     <Region name="Price contract introduction" top={222} height={43}><Text style={[s.text, { textAlign: "justify" }]}>This offer accepted by you shall constitute the contract between us to make this offer a legal and valid contract binding on both parties.</Text></Region>
     <Region name="Commercial heading" top={275} height={20}><Text style={[s.bold, { textDecoration: "underline" }]}>Commercial Terms & Conditions: -</Text></Region>
-    <Region name="Price amount" top={315} height={34}><Text style={s.bold}><Text style={{ textDecoration: "underline" }}>Price:</Text> {displayPrice(page.price.formatted)}{page.price.words ? ` (${page.price.words}).` : ""}</Text></Region>
-    {page.additionalEntry && <Region name="Additional commercial entry" top={352} height={28} style={{fontSize:10.5}}><Text><Text style={s.bold}>{page.additionalEntry.label}:</Text> {page.additionalEntry.value}</Text></Region>}
-    <Region name="Commercial terms" top={354 + extraOffset} height={102}>{terms.map(([label, value]) => <View key={label} style={s.commercialRow}><Text style={s.commercialLabel}>{label}</Text><Text style={[s.commercialValue, { fontSize: terms.some(([, text]) => safe(text).length > 170) ? 9.5 : 11 }]}>: {safe(value)}</Text></View>)}</Region>
-    <Region name="Payment heading" top={462 + extraOffset} height={20}><Text style={[s.bold, { textDecoration: "underline" }]}>Terms of Payments</Text></Region>
-    <Region name="Payment stages" top={489 + extraOffset} height={46}>{page.payment.map((stage) => <Text key={stage.key} style={s.text}>{safe(stage.percentage)}% {stage.description}</Text>)}</Region>
-    <Region name="Acceptance statement" top={543 + extraOffset} height={30}><Text>All the above specifications /Prices and other terms &conditions are accepted.</Text></Region>
-    {[["Accepted by", page.acceptance.acceptanceName], ["Signature", ""], ["Name", page.acceptance.acceptanceName], ["Date", displayDate(page.acceptance.acceptanceDate)]].map(([label, value], index) => <Region key={label} name="Acceptance field" top={584 + extraOffset + index * 27} height={26}><View style={{ flexDirection: "row" }}><Text style={{ width: 79 }}>{label}</Text><Text style={{ flex: 1 }}>: {safe(value)}</Text></View></Region>)}
+    <Region name="Price amount" top={305} height={34}><Text style={s.bold}><Text style={{ textDecoration: "underline" }}>Price:</Text> {displayPrice(page.price.formatted)}{page.price.words ? ` (${page.price.words}).` : ""}</Text></Region>
+    {page.additionalEntry && <Region name="Additional commercial entry" top={340} height={26} style={{fontSize:10.5}}><Text><Text style={s.bold}>{page.additionalEntry.label}:</Text> {page.additionalEntry.value}</Text></Region>}
+    <Region name="Commercial terms" top={342 + extraOffset} height={100}>{terms.map(([label, value]) => <View key={label} style={s.commercialRow}><Text style={s.commercialLabel}>{label}</Text><Text style={[s.commercialValue, { fontSize: terms.some(([, text]) => safe(text).length > 170) ? 9.5 : 11 }]}>: {safe(value)}</Text></View>)}</Region>
+    <Region name="Payment heading" top={445 + extraOffset} height={17}><Text style={[s.bold, { textDecoration: "underline" }]}>Terms of Payments</Text></Region>
+    <Region name="Payment stages" top={466 + extraOffset} height={44}>{page.payment.map((stage) => <Text key={stage.key} style={s.text}>{safe(stage.percentage)}% {stage.description}</Text>)}</Region>
+    {page.bankDetails && <Region name="Bank details" top={514 + extraOffset} height={80} style={{fontSize:10.5,lineHeight:1.2}}><Text style={s.bold}>Our Bank Details:</Text>{[["A/c Name",page.bankDetails.accountName],["A/c No",page.bankDetails.accountNumber],["Bank Name",page.bankDetails.bankName],["IFSC",page.bankDetails.ifsc]].map(([label,value])=><Text key={label}>{label}: {safe(value)}</Text>)}</Region>}
+    <Region name="Acceptance statement" top={600 + extraOffset} height={30}><Text>All the above specifications /Prices and other terms &conditions are accepted.</Text></Region>
+    {[["Accepted by", page.acceptance.acceptanceName], ["Signature", ""], ["Name", page.acceptance.acceptanceName], ["Date", displayDate(page.acceptance.acceptanceDate)]].map(([label, value], index) => <Region key={label} name="Acceptance field" top={630 + extraOffset + index * 19} height={18}><View style={{ flexDirection: "row" }}><Text style={{ width: 79 }}>{label}</Text><Text style={{ flex: 1 }}>: {safe(value)}</Text></View></Region>)}
   </PdfPage>;
 }
 function WarrantyPage({ page, ...props }) {

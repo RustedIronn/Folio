@@ -54,7 +54,7 @@ service cloud.firestore {
       return data.kind == 'material'
         && data.keys().hasAll(['materialKey', 'specification'])
         && data.keys().hasOnly(['id', 'kind', 'materialKey', 'customName', 'specification', 'created_by', 'created_at'])
-        && ((data.materialKey in ['controlPanel', 'cabin', 'doors', 'flooring', 'rope', 'lopCop', 'lightsBlower', 'indications', 'security', 'motors', 'guideRails', 'autoRescueDevice', 'landingProtection'] && !data.keys().hasAny(['customName']))
+        && ((data.materialKey in ['controlPanel', 'cabin', 'doors', 'flooring', 'rope', 'lopCop', 'lightsBlower', 'indications', 'security', 'motors', 'guideRails', 'autoRescueDevice', 'landingProtection', 'rcr'] && !data.keys().hasAny(['customName']))
           || (data.materialKey == 'custom' && data.keys().hasAll(['customName']) && requiredText(data.customName, 60)))
         && requiredText(data.specification, 180);
     }

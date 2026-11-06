@@ -416,3 +416,13 @@ input::placeholder,textarea::placeholder { color:var(--color-muted); }
 .commercial-extra { margin-block:var(--space-5); }
 .custom-material-editor { min-width:0; display:grid; gap:var(--space-2); margin-top:var(--space-3); }
 .custom-material-editor input { width:100%; min-height:var(--control-height); border:var(--control-border); border-radius:var(--radius-control); padding:var(--control-padding-y) var(--control-padding-x); background:var(--control-background); color:var(--color-ink); }
+
+/* Quotation-specific contractual periods and payment account details. */
+.contract-term-editor { min-width: 0; }
+.contract-term-editor h3 { margin: 0; font: inherit; font-weight: 600; }
+.contract-wording-preview { margin: var(--space-3, 12px) 0 0; line-height: 1.6; color: var(--color-ink); overflow-wrap: anywhere; }
+.bank-details-preview { display: grid; gap: var(--space-3, 12px); margin-bottom: 0; }
+.bank-details-preview > div { display: grid; grid-template-columns: minmax(100px, 1fr) minmax(0, 2fr); gap: var(--space-3, 12px); }
+.bank-details-preview dt { opacity: .8; }
+.bank-details-preview dd { margin: 0; overflow-wrap: anywhere; }
+@media (max-width: 600px) { .bank-details-preview > div { grid-template-columns: 1fr; gap: 4px; } }
