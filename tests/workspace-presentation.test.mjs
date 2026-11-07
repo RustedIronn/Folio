@@ -22,6 +22,7 @@ async function component(file, exportName = "default") {
 
 const ReviewStep = await component("../src/app/steps/ReviewStep.jsx");
 const CustomerStep = await component("../src/app/steps/CustomerStep.jsx");
+const MaterialsStep = await component("../src/app/steps/MaterialsStep.jsx");
 const CommercialStep = await component("../src/app/steps/CommercialStep.jsx");
 const LiftStep = await component("../src/app/steps/LiftStep.jsx");
 const WorkspaceSummary = await component("../src/app/components/WorkspaceSummary.jsx");
@@ -116,7 +117,7 @@ test("review uses three cards while retaining all material rows and their edit a
   assert.ok(html.includes("Lift &amp; materials"));
   assert.ok(html.includes('aria-label="Edit materials"'));
   assert.ok(html.includes("View all materials details"));
-  for(const row of template.materials) assert.ok(html.includes(row.label));
+  for(const row of entryWorkflow(sampleQuotation()).resolved.pages.materials.rows) assert.ok(html.includes(row.label));
   assert.ok(html.includes("35% / 55% / 10%"));
 });
 test("customer sidebar summarizes actual addressing and project details without placeholders", () => {
@@ -217,4 +218,12 @@ test("saved drafts expose a specific delete action only for verified employees w
  const workflow={employee:{user:{uid:"synthetic-user"},authorized:true},drafts:{drafts:[entry],workspace:entry,localSaved:true,status:"saved",manager:{open:noop}},setAuthIntent:noop};
  let html=renderToStaticMarkup(React.createElement(CloudDraftsBar,{workflow}));assert.ok(html.includes("Delete selected draft"));assert.ok(!html.includes("Delete all"));
  workflow.employee.authorized=false;html=renderToStaticMarkup(React.createElement(CloudDraftsBar,{workflow}));assert.ok(!html.includes("Delete selected draft"));
+});
+
+test("Buzzer and RCR editors follow selected configuration eligibility",()=>{
+ for(const id of ["10","12"]) {
+ const q=sampleQuotation();q.lift.catalogueId=id;const workflow=entryWorkflow(q);const eligible=workflow.resolved.pages.installation.doorAccessoriesAvailable;
+ const lift=renderToStaticMarkup(React.createElement(LiftStep,{workflow}));assert.equal(lift.includes('id="technical-buzzer"'),eligible);
+ const materials=renderToStaticMarkup(React.createElement(MaterialsStep,{workflow}));assert.equal(materials.includes("<strong>RCR</strong>"),eligible);
+ }
 });

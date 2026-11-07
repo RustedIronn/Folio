@@ -15,7 +15,7 @@ export const FIELD_TARGETS = {
   "document.type": "document-type", "reference.quotationNumber": "reference-number", "reference.officeCode": "reference-office", "reference.financialYear": "reference-financial-year", "metadata.date": "quotation-date",
   "customer.address": "customer-address", "customer.attentionName": "recipient-name", "customer.projectLocation": "project-location",
   "lift.catalogueId": "configuration", "lift.quantityType": "configuration", "lift.quantity": "quantity", "lift.project.capacity": "passenger-count", "lift.project.travelHeight": "project-travel", "lift.project.floors": "upper-floors", "lift.project.landings": "upper-floors", "lift.project.cabinCutting": "project-cabin-cutting",
-  "commercial.additionalEntry.label": "commercial-extra-label", "commercial.additionalEntry.value": "commercial-extra-value", "commercial.priceAmount": "price", "commercial.taxDescription": "tax", "commercial.packingForwarding": "packing", "commercial.delivery": "delivery", "commercial.transportOctroi": "transport", "commercial.guarantee": "guarantee",
+  "commercial.additionalEntry.treatment": "commercial-extra-treatment", "commercial.additionalEntry.label": "commercial-extra-label", "commercial.additionalEntry.value": "commercial-extra-value", "commercial.priceAmount": "price", "commercial.taxDescription": "tax", "commercial.packingForwarding": "packing", "commercial.delivery": "delivery", "commercial.transportOctroi": "transport", "commercial.guarantee": "guarantee",
   "commercial.payment": "payment-advance", "commercial.payment.advance": "payment-advance", "commercial.payment.dispatch": "payment-dispatch", "commercial.payment.completion": "payment-completion",
 };
 

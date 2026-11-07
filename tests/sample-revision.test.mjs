@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {sampleQuotation,renderQuotation,catalogue} from "../scripts/pdf-test-support.mjs";
 import {ALTIS_QUOTATION_TEMPLATE as template} from "../src/templates/altisQuotationTemplate.js";
-import {createQuotation,resolveQuotationDocument,setUpperFloors,setFloorMode,serializeDraft,restoreDraft,setTechnicalOverride,setMaterialOverride} from "../src/models/quotation/quotation.js";
+import {createQuotation,resolveQuotationDocument,applyConfiguration,setUpperFloors,setFloorMode,serializeDraft,restoreDraft,setTechnicalOverride,setMaterialOverride} from "../src/models/quotation/quotation.js";
 import {guaranteePeriods,setGuaranteePeriod,resolveWarrantySections} from "../src/models/quotation/contractTerms.js";
 import {displayTravelHeight} from "../src/pdf/documentPresentation.js";
 import {entryOptionRecord} from "../src/models/catalogue/sharedEntryOptions.js";
@@ -54,16 +54,16 @@ test("bank choices preserve custom account numbers and validate incomplete custo
  next.commercial.bankDetails.custom.ifsc="";assert.ok(resolve(next).missing.some((issue)=>issue.path === "commercial.bankDetails.ifsc"));
 });
 test("Buzzer and optional RCR resolve through the canonical overrides without invented catalogue data",()=>{
- let q=sampleQuotation();q=setTechnicalOverride(q,"buzzer","Synthetic buzzer specification",catalogue,template);q=setMaterialOverride(q,"rcr","hydraulic type",template);
+ let q=applyConfiguration(sampleQuotation(),catalogue.records.find((r)=>/swing door/i.test(r.quantityType)));q=setTechnicalOverride(q,"buzzer","Synthetic buzzer specification",catalogue,template);q=setMaterialOverride(q,"rcr","hydraulic type",template);
  const doc=resolve(restoreDraft(serializeDraft(q),template));assert.equal(doc.pages.installation.technical.buzzer,"Synthetic buzzer specification");
  assert.equal(doc.pages.materials.rows.find((row)=>row.key === "rcr").value,"hydraulic type");
- const blank=resolve(sampleQuotation()).pages.materials.rows.find((row)=>row.key === "rcr");assert.equal(blank.value,"");assert.ok(blank.optional);
+ const blank=resolve(applyConfiguration(sampleQuotation(),catalogue.records.find((r)=>/swing door/i.test(r.quantityType)))).pages.materials.rows.find((row)=>row.key === "rcr");assert.equal(blank.value,"");assert.ok(blank.optional);
  assert.ok(!doc.pages.materials.rows.some((row)=>row.key === "landingProtection"));
  assert.ok(doc.pages.obligations.customer[0].includes("electrical work and earth pit"));
  assert.equal(entryOptionRecord({id:"20000000-0000-4000-8000-000000000001",kind:"material",materialKey:"rcr",specification:"Synthetic RCR"}).materialKey,"rcr");
 });
 for(const variant of ["branded","printable"]) test(variant+" revised PDF keeps six pages with Buzzer, bank, numeric terms, Cellar and optional RCR",async()=>{
- let q=setUpperFloors(sampleQuotation(),"2");q=setTechnicalOverride(q,"buzzer","Synthetic buzzer specification",catalogue,template);q=setMaterialOverride(q,"rcr","hydraulic type",template);
+ let q=setUpperFloors(applyConfiguration(sampleQuotation(),catalogue.records.find((r)=>/swing door/i.test(r.quantityType))),"2");q=setTechnicalOverride(q,"buzzer","Synthetic buzzer specification",catalogue,template);q=setMaterialOverride(q,"rcr","hydraulic type",template);
  q.commercial.additionalEntry={label:"Site note",value:"Synthetic informational line"};
  q.commercial.warrantyPeriods={handoverYears:"2",dispatchMonths:"24",serviceIntervalDays:"30",freeServiceMonths:"18"};
  const {layout}=await renderQuotation(q,{variant});assert.equal(layout.children.length,6);

@@ -41,7 +41,7 @@ for (const [name, quotation] of Object.entries(sampleCases())) {
     assert.ok((buffer.toString("latin1").match(/\/Subtype \/Image/g) ?? []).length >= 2);
     assert.ok(buffer.toString("latin1").includes("/Width 1570"), "The complete approved branding lockup is embedded at high resolution");
     assert.equal(layout.children.length, 6);
-    assert.equal(documentData.pages.materials.rows.length, 13);
+    assert.equal(documentData.pages.materials.rows.length, 12);
     assert.equal(JSON.stringify(quotation), original);
   });
   test(`${name} print-friendly quotation keeps six pages, body text and signature footers without branding`, async () => {

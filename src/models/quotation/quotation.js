@@ -1,5 +1,7 @@
 import { documentIdentity, extensionDefaults, MAX_CUSTOM_MATERIALS } from "./quotationExtensions.js";
 import { guaranteePeriods, resolveBankDetails, resolveWarrantySections, WARRANTY_PERIODS } from "./contractTerms.js";
+import { ENTRY_TREATMENTS, extraCharge, priceWithExtra } from "./commercialEntry.js";
+import { supportsDoorAccessories } from "../catalogue/configurationFeatures.js";
 import { isSharedModel } from "../catalogue/sharedModels.js";
 
 export const QUOTATION_SCHEMA_VERSION = 4;
@@ -25,7 +27,7 @@ export function createQuotation(template) {
     customer: { name: "", address: "", salutation: "", otherSalutation: "", attentionName: "", projectLocation: "", subjectMode: "supplyLift", subjectCustom: "" },
     lift: { catalogueId: "", catalogueSourceRow: null, quantity: "1", technicalOverrides: {}, project: { ...Object.fromEntries(PROJECT_FIELDS.map(([key]) => [key, ""])), passengerCount: "", maximumLoadKg: "" }, installation: emptyInstallation() },
     materials: { overrides: {}, customRows: [] },
-    commercial: { warrantyPeriods: {}, bankDetails: {mode:"standard",selectedId:template.bankAccounts[0].id,custom:{accountName:"",accountNumber:"",bankName:"",ifsc:""}}, additionalEntry: { label: "", value: "" }, priceAmount: "", taxDescription: template.commercial.taxDescription, packingForwarding: template.commercial.packingForwarding, delivery: template.commercial.delivery, transportOctroi: template.commercial.transportOctroi, guarantee: template.commercial.guarantee, payment: Object.fromEntries(template.commercial.paymentStages.map((stage) => [stage.key, stage.percentage])) },
+    commercial: { warrantyPeriods: {}, bankDetails: {mode:"standard",selectedId:template.bankAccounts[0].id,custom:{accountName:"",accountNumber:"",bankName:"",ifsc:""}}, additionalEntry: { label: "", value: "", treatment: "informational" }, priceAmount: "", taxDescription: template.commercial.taxDescription, packingForwarding: template.commercial.packingForwarding, delivery: template.commercial.delivery, transportOctroi: template.commercial.transportOctroi, guarantee: template.commercial.guarantee, payment: Object.fromEntries(template.commercial.paymentStages.map((stage) => [stage.key, stage.percentage])) },
     document: { type: "quotation", acceptanceName: "", acceptanceDate: "" },
   };
 }
@@ -130,7 +132,7 @@ export function amountInWords(value) {
   if (!Number.isFinite(number) || number < 0) return "";
   const rupees = Math.floor(number);
   const paise = Math.round((number - rupees) * 100);
-  if (rupees === 0) return "Rupees Zero Only";
+  if (rupees === 0) return "Rupees Zero" + (paise ? " and " + wordsUnder1000(paise) + " Paise" : "") + " Only";
   const groups = [[10000000, "Crore"], [100000, "Lakh"], [1000, "Thousand"], [1, ""]];
   let remaining = rupees; const parts = [];
   for (const [size, label] of groups) {
@@ -163,15 +165,18 @@ export function resolveQuotationDocument(quotation, catalogue, template) {
   const identity = documentIdentity(quotation.document?.type);
   const record = selectedConfiguration(quotation, catalogue);
   quotation = extensionDefaults(quotation, template);
+  const doorAccessoriesAvailable = supportsDoorAccessories(record);
+  const materialSchedule = template.materials.filter((item)=>item.key !== "rcr" || doorAccessoriesAvailable);
   const technical = technicalValues(quotation, record, template);
-  const materials = Object.fromEntries(template.materials.map((item) => [item.key, materialValue(quotation, item, technical)]));
+  if (!doorAccessoriesAvailable) delete technical.buzzer;
+  const materials = Object.fromEntries(materialSchedule.map((item) => [item.key, materialValue(quotation, item, technical)]));
   const missing = [];
   const require = (path, value, label) => { if (!String(value ?? "").trim()) missing.push({ path, label }); };
   [["reference.quotationNumber", quotation.reference.quotationNumber, identity.label + " number"], ["reference.officeCode", quotation.reference.officeCode, "Office/location code"], ["reference.financialYear", quotation.reference.financialYear, "Financial year"], ["metadata.date", quotation.metadata.date, identity.label + " date"], ["customer.address", quotation.customer.address, "Customer address"], ["customer.attentionName", quotation.customer.attentionName, "Recipient name"], ["customer.projectLocation", quotation.customer.projectLocation, "Project location"], ["lift.catalogueId", quotation.lift.catalogueId, "Lift configuration"], ["lift.quantityType", record?.quantityType, "Detailed lift configuration"], ["commercial.priceAmount", quotation.commercial.priceAmount, identity.label + " price"], ["commercial.taxDescription", quotation.commercial.taxDescription, "Tax treatment"], ["commercial.packingForwarding", quotation.commercial.packingForwarding, "Packing and forwarding"], ["commercial.delivery", quotation.commercial.delivery, "Delivery period"], ["commercial.transportOctroi", quotation.commercial.transportOctroi, "Transport/octroi"], ["commercial.guarantee", quotation.commercial.guarantee, "Guarantee"]].forEach(([path, value, label]) => require(path, value, label));
   [["travelHeight", "Travel height"], ["floors", "No. of floors"], ["landings", "No. of landings"], ["cabinCutting", "Cabin cutting"]].forEach(([key, label]) => require("lift.project." + key, quotation.lift.project[key], label));
   require("lift.project.capacity", composeCapacity(quotation.lift.project), "Passenger count and maximum load");
   template.commercial.paymentStages.forEach((stage) => require("commercial.payment." + stage.key, quotation.commercial.payment[stage.key], stage.key + " payment percentage"));
-  template.materials.filter((item) => !item.optional).forEach((item) => require("materials." + item.key, materials[item.key], item.label));
+  materialSchedule.filter((item) => !item.optional).forEach((item) => require("materials." + item.key, materials[item.key], item.label));
   const bounded = [
     ["customer.address", quotation.customer.address, "Customer address", 300],
     ["customer.attentionName", quotation.customer.attentionName, "Kind Attention name", 100],
@@ -179,7 +184,7 @@ export function resolveQuotationDocument(quotation, catalogue, template) {
     ["commercial.guarantee", quotation.commercial.guarantee, "Guarantee", 320],
   ];
   PROJECT_FIELDS.forEach(([key, label]) => bounded.push(["lift.project." + key, quotation.lift.project[key], label, 180]));
-  template.materials.forEach((item) => bounded.push(["materials." + item.key, materials[item.key], item.label, 180]));
+  materialSchedule.forEach((item) => bounded.push(["materials." + item.key, materials[item.key], item.label, 180]));
   bounded.forEach(([path, value, label, limit]) => { if (String(value ?? "").length > limit) missing.push({ path, label: label + " exceeds the PDF layout limit of " + limit + " characters" }); });
   if (quotation.document.type && !["quotation", "agreement"].includes(quotation.document.type)) missing.push({ path: "document.type", label: "Choose Quotation or Agreement" });
   if (quotation.reference.officeCode && (quotation.reference.officeCode.includes("/") || quotation.reference.officeCode.length > 24)) missing.push({ path: "reference.officeCode", label: "Office code must be at most 24 characters and cannot contain /" });
@@ -194,8 +199,12 @@ export function resolveQuotationDocument(quotation, catalogue, template) {
     if (typeof row.value !== "string" || !row.value.trim() || row.value.length > 180) missing.push({ path: path + ".value", label: "Enter a custom material specification of 1–180 characters" });
   });
   const additional = quotation.commercial.additionalEntry ?? { label: "", value: "" };
+  const treatment = additional.treatment ?? "informational";
   const hasAdditional = Boolean(String(additional.label ?? "").trim() || String(additional.value ?? "").trim());
   if (hasAdditional) {
+    if(!ENTRY_TREATMENTS.includes(treatment)) missing.push({path:"commercial.additionalEntry.treatment",label:"Choose how the extra entry affects the price"});
+    if(["included","excluded"].includes(treatment) && extraCharge(additional.value) === null) missing.push({path:"commercial.additionalEntry.value",label:"Enter an extra amount using digits and up to two decimal places"});
+    if(treatment === "included" && String(quotation.commercial.priceAmount).trim() && !Number.isSafeInteger(Math.round(Number(quotation.commercial.priceAmount)*100)+(extraCharge(additional.value) ?? 0))) missing.push({path:"commercial.additionalEntry.value",label:"The combined amount exceeds the supported currency precision"});
     if (!String(additional.label ?? "").trim() || String(additional.label).length > 40) missing.push({ path: "commercial.additionalEntry.label", label: "Enter an additional commercial label of 1–40 characters" });
     if (!String(additional.value ?? "").trim() || String(additional.value).length > 120) missing.push({ path: "commercial.additionalEntry.value", label: "Enter an additional commercial value of 1–120 characters" });
   }
@@ -226,10 +235,10 @@ export function resolveQuotationDocument(quotation, catalogue, template) {
     documentNotices: identity.type === "agreement" ? ["Agreement mode retains the approved quotation cover letter, offer/acceptance wording and contractual clauses. Altis must confirm that this wording is appropriate before an agreement is issued."] : [],
     pages: {
       cover: { documentLabel: identity.label, company: template.company, reference: composeReference(quotation.reference, template, identity.type), date: quotation.metadata.date, customer: quotation.customer, attention: composeAttention(quotation.customer), subject: composeSubject(quotation.customer, identity.type), letter: template.coverLetter },
-      installation: { includeCellar: quotation.lift.installation.includeCellar !== false, quantity: quotation.lift.quantity, quantityType: record?.quantityType ?? "", quantityAndType: composeQuantityAndType(quotation.lift.quantity, record?.quantityType ?? ""), technical, project: { ...quotation.lift.project, capacity: composeCapacity(quotation.lift.project) }, carDesign: materials.cabin, footer: { date: quotation.metadata.date, ...template.signatures } },
-      priceSchedule: { quantity: quotation.lift.quantity, capacity: composeCapacity(quotation.lift.project), projectLocation: quotation.customer.projectLocation, documentLabel: identity.label, additionalEntryPresent: hasAdditional, additionalEntry: hasAdditional && String(additional.label ?? "").trim() && String(additional.value ?? "").trim() ? { label: String(additional.label).trim(), value: String(additional.value).trim() } : null, price: documentPrice(quotation.commercial.priceAmount, quotation.lift.quantity), taxDescription: quotation.commercial.taxDescription, packingForwarding: quotation.commercial.packingForwarding, delivery: quotation.commercial.delivery, transportOctroi: quotation.commercial.transportOctroi, guarantee: quotation.commercial.guarantee, bankDetails, bankDetailsCustom: quotation.commercial.bankDetails?.mode === "custom", payment: template.commercial.paymentStages.map((stage) => ({ ...stage, percentage: quotation.commercial.payment[stage.key] })), acceptance: quotation.document, footer: { date: quotation.metadata.date, ...template.signatures } },
+      installation: { doorAccessoriesAvailable, includeCellar: quotation.lift.installation.includeCellar !== false, quantity: quotation.lift.quantity, quantityType: record?.quantityType ?? "", quantityAndType: composeQuantityAndType(quotation.lift.quantity, record?.quantityType ?? ""), technical, project: { ...quotation.lift.project, capacity: composeCapacity(quotation.lift.project) }, carDesign: materials.cabin, footer: { date: quotation.metadata.date, ...template.signatures } },
+      priceSchedule: { quantity: quotation.lift.quantity, capacity: composeCapacity(quotation.lift.project), projectLocation: quotation.customer.projectLocation, documentLabel: identity.label, additionalEntryPresent: hasAdditional, additionalEntry: hasAdditional && String(additional.label ?? "").trim() && String(additional.value ?? "").trim() ? { label: String(additional.label).trim(), value: String(additional.value).trim(), treatment, displayValue: treatment === "informational" ? String(additional.value).trim() : `${extraCharge(additional.value) === null ? "Amount pending" : formatInr(additional.value)} (${treatment === "included" ? "Included" : "Excluded"})` } : null, price: documentPrice(priceWithExtra(quotation.commercial.priceAmount,additional), quotation.lift.quantity), taxDescription: quotation.commercial.taxDescription, packingForwarding: quotation.commercial.packingForwarding, delivery: quotation.commercial.delivery, transportOctroi: quotation.commercial.transportOctroi, guarantee: quotation.commercial.guarantee, bankDetails, bankDetailsCustom: quotation.commercial.bankDetails?.mode === "custom", payment: template.commercial.paymentStages.map((stage) => ({ ...stage, percentage: quotation.commercial.payment[stage.key] })), acceptance: quotation.document, footer: { date: quotation.metadata.date, ...template.signatures } },
       warranty: { ...template.warranty, sections: resolveWarrantySections(template,warrantyPeriods), footer: { date: quotation.metadata.date, ...template.signatures } },
-      materials: { rows: [...template.materials.map((item) => ({ ...item, value: materials[item.key] })), ...customRows.map((row, index) => ({ key: "custom-" + (row.id || index), id: row.id, label: typeof row.name === "string" ? row.name : "", value: typeof row.value === "string" ? row.value : "", source: "custom", optional: false }))], footer: { date: quotation.metadata.date, ...template.signatures } },
+      materials: { rows: [...materialSchedule.map((item) => ({ ...item, value: materials[item.key] })), ...customRows.map((row, index) => ({ key: "custom-" + (row.id || index), id: row.id, label: typeof row.name === "string" ? row.name : "", value: typeof row.value === "string" ? row.value : "", source: "custom", optional: false }))], footer: { date: quotation.metadata.date, ...template.signatures } },
       obligations: { ...template.obligations, customer: /hydraulic/i.test(record?.quantityType ?? "") ? [template.obligations.customer[0], template.obligations.customer.at(-1)] : template.obligations.customer, footer: { date: quotation.metadata.date, ...template.signatures } },
     },
   };
